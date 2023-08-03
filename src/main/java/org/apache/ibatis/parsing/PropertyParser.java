@@ -18,6 +18,7 @@ package org.apache.ibatis.parsing;
 import java.util.Properties;
 
 /**
+ * 属性解析器。处理xml的属性占位符。
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
@@ -25,6 +26,7 @@ public class PropertyParser {
 
   private static final String KEY_PREFIX = "org.apache.ibatis.parsing.PropertyParser.";
   /**
+   * 在mybatis-config.xml中properties节点下配置是否开启默认值功能的对应配置项
    * The special property key that indicate whether enable a default value on placeholder.
    * <p>
    *   The default value is {@code false} (indicate disable a default value on placeholder)
@@ -35,6 +37,7 @@ public class PropertyParser {
   public static final String KEY_ENABLE_DEFAULT_VALUE = KEY_PREFIX + "enable-default-value";
 
   /**
+   * 配置占位符与默认值之间的默认分隔符的对应配置项
    * The special property key that specify a separator for key and default value on placeholder.
    * <p>
    *   The default separator is {@code ":"}.
@@ -43,7 +46,10 @@ public class PropertyParser {
    */
   public static final String KEY_DEFAULT_VALUE_SEPARATOR = KEY_PREFIX + "default-value-separator";
 
+  //默认情况下，关闭默认值的功能
   private static final String ENABLE_DEFAULT_VALUE = "false";
+
+  //默认分隔符是冒号
   private static final String DEFAULT_VALUE_SEPARATOR = ":";
 
   private PropertyParser() {
@@ -52,10 +58,14 @@ public class PropertyParser {
 
   public static String parse(String string, Properties variables) {
     VariableTokenHandler handler = new VariableTokenHandler(variables);
+    //创建GenericTokenParser对象，并指定其处理的占位符格式为"${}"，解析占位符值
     GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
     return parser.parse(string);
   }
 
+  /**
+   * 底层属性占位符处理器。被GenericTokenParser封装，并由它调用；而GenericTokenParser又由PropertyParser方法调用
+   */
   private static class VariableTokenHandler implements TokenHandler {
     private final Properties variables;
     private final boolean enableDefaultValue;
