@@ -67,8 +67,11 @@ public class PropertyParser {
    * 底层属性占位符处理器。被GenericTokenParser封装，并由它调用；而GenericTokenParser又由PropertyParser方法调用
    */
   private static class VariableTokenHandler implements TokenHandler {
+    //properties节点下定义的键值对，用于替换占位符
     private final Properties variables;
+    //是否支持占位符中使用默认值的功能
     private final boolean enableDefaultValue;
+    //指定占位符和默认值之间的分隔符
     private final String defaultValueSeparator;
 
     private VariableTokenHandler(Properties variables) {
@@ -77,29 +80,44 @@ public class PropertyParser {
       this.defaultValueSeparator = getPropertyValue(KEY_DEFAULT_VALUE_SEPARATOR, DEFAULT_VALUE_SEPARATOR);
     }
 
+    /**
+     * 初始化enableDefaultValue和defaultValueSeparator的方法。
+     * 其值有默认值，非默认时从properties节点获取。通过设置enable-default-value为true支持默认值设置
+     * @param key
+     * @param defaultValue
+     * @return
+     */
     private String getPropertyValue(String key, String defaultValue) {
       return (variables == null) ? defaultValue : variables.getProperty(key, defaultValue);
     }
 
     @Override
     public String handleToken(String content) {
+      //检测variables集合是否为空
       if (variables != null) {
         String key = content;
-        if (enableDefaultValue) {
+        //检测是否支持占位符中使用默认值的功能
+        if (enableDefaultValue) {//设置支持默认值
+          //查找分割符
           final int separatorIndex = content.indexOf(defaultValueSeparator);
           String defaultValue = null;
           if (separatorIndex >= 0) {
+            //获取占位符的属性名称
             key = content.substring(0, separatorIndex);
+            //获取占位符设置的默认值
             defaultValue = content.substring(separatorIndex + defaultValueSeparator.length());
           }
           if (defaultValue != null) {
+            //支持默认值且设置了占位符默认值，则查找properties节点并返回
             return variables.getProperty(key, defaultValue);
           }
         }
+        //不支持默认值的功能 或 支持但没有设置默认值，则直接查找variable集合
         if (variables.containsKey(key)) {
           return variables.getProperty(key);
         }
       }
+      //variables集合为空，即没有定义属性节点
       return "${" + content + "}";
     }
   }
