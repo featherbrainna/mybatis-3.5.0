@@ -16,22 +16,22 @@
 package org.apache.ibatis.parsing;
 
 /**
- * 通用的占位符解析器
+ * 通用的token解析器
  * @author Clinton Begin
  */
 public class GenericTokenParser {
 
   /**
-   * 占位符的开始标记
+   * token的开始标记
    */
   private final String openToken;
   /**
-   * 占位符的结束标记
+   * token的结束标记
    */
   private final String closeToken;
   /**
-   * 底层实现占位符处理的组件。
-   * TokenHandler接口的实现会按照一定的逻辑解析占位符
+   * 底层实现token处理的组件。
+   * TokenHandler接口的实现会按照一定的逻辑解析token字符串
    */
   private final TokenHandler handler;
 
@@ -51,7 +51,7 @@ public class GenericTokenParser {
     if (text == null || text.isEmpty()) {
       return "";
     }
-    //查找token的开始标记 search open token
+    //1.查找token的开始下标 search open token
     int start = text.indexOf(openToken);
     //没找到token返回原text
     if (start == -1) {
@@ -59,10 +59,10 @@ public class GenericTokenParser {
     }
     //原字符串
     char[] src = text.toCharArray();
-    int offset = 0;//以处理字符串的下标
+    int offset = 0;//查找起始位置下标
     //解析后的字符串
     final StringBuilder builder = new StringBuilder();
-    //记录占位符的字面值
+    //记录token字符串的字面值
     StringBuilder expression = null;
     //2.遍历解析处理字符串
     while (start > -1) {
@@ -74,6 +74,7 @@ public class GenericTokenParser {
       } else {
         // found open token. let's search close token.
         //4.查找到开始标记，且未转义
+        //重置expression对象
         if (expression == null) {
           expression = new StringBuilder();
         } else {
@@ -82,7 +83,7 @@ public class GenericTokenParser {
         //将前面的字符串追加到builder中
         builder.append(src, offset, start - offset);
         offset = start + openToken.length();
-        //向offset后继续查找结束标记
+        //向offset后查找结束标记
         int end = text.indexOf(closeToken, offset);
         while (end > -1) {
           if (end > offset && src[end - 1] == '\\') {
@@ -110,8 +111,10 @@ public class GenericTokenParser {
           offset = end + closeToken.length();
         }
       }
+      //继续，寻找开始 openToken的位置
       start = text.indexOf(openToken, offset);
     }
+    //拼接剩余的部分
     if (offset < src.length) {
       builder.append(src, offset, src.length - offset);
     }

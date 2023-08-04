@@ -52,14 +52,17 @@ public class PropertyParser {
   //默认分隔符是冒号
   private static final String DEFAULT_VALUE_SEPARATOR = ":";
 
+  //禁止构造 PropertyParser 对象，因为它是一个静态方法的工具类
   private PropertyParser() {
     // Prevent Instantiation
   }
 
   public static String parse(String string, Properties variables) {
+    //1.创建VariableTokenHandler对象
     VariableTokenHandler handler = new VariableTokenHandler(variables);
-    //创建GenericTokenParser对象，并指定其处理的占位符格式为"${}"，解析占位符值
+    //2.创建GenericTokenParser对象，并指定其处理的占位符格式为"${}"，解析占位符值
     GenericTokenParser parser = new GenericTokenParser("${", "}", handler);
+    //3.委托GenericTokenParser执行解析
     return parser.parse(string);
   }
 
@@ -82,7 +85,8 @@ public class PropertyParser {
 
     /**
      * 初始化enableDefaultValue和defaultValueSeparator的方法。
-     * 其值有默认值，非默认时从properties节点获取。通过设置enable-default-value为true支持默认值设置
+     * variables为null，直接返回传入的默认值；
+     *          不为null查找variables对应的属性值，找不到返回传入的默认值，找到返回属性值。
      * @param key
      * @param defaultValue
      * @return

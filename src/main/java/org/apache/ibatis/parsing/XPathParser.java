@@ -53,11 +53,11 @@ public class XPathParser {
    */
   private EntityResolver entityResolver;
   /**
-   * xxx.xml 中properties标签定义的键值对集合
+   * xxx.xml 中properties标签定义的键值对集合，变量 Properties 对象，用来替换需要动态配置的属性值。
    */
   private Properties variables;
   /**
-   * XPath对象
+   * XPath对象，用于查询 XML 中的节点和元素
    */
   private XPath xpath;
 
@@ -121,6 +121,13 @@ public class XPathParser {
     this.document = document;
   }
 
+  /**
+   * 构造XPathParser对象
+   * @param xml xml文件路径
+   * @param validation 是否校验xml文件合法
+   * @param variables xml的属性对象
+   * @param entityResolver XML 实体解析器，用于xml的校验过程
+   */
   public XPathParser(String xml, boolean validation, Properties variables, EntityResolver entityResolver) {
     commonConstructor(validation, variables, entityResolver);
     this.document = createDocument(new InputSource(new StringReader(xml)));
@@ -150,13 +157,15 @@ public class XPathParser {
   }
 
   /**
-   * 方法重载，不指定Document对象而使用传入的root对象
+   * eval元素方法，方法重载，不指定Document对象而使用传入的root对象
    * @param root Document对象
    * @param expression XPath表达式
    * @return 查询结果
    */
   public String evalString(Object root, String expression) {
+    //1.委托xpath获得值
     String result = (String) evaluate(expression, root, XPathConstants.STRING);
+    //2.基于variable替换动态值，如果result为动态值
     result = PropertyParser.parse(result, variables);
     return result;
   }
@@ -213,9 +222,17 @@ public class XPathParser {
     return evalNodes(document, expression);
   }
 
+  /**
+   * eval节点方法，基于指定root节点和xpath表达式获取节点列表
+   * @param root 节点
+   * @param expression xpath表达式
+   * @return 节点列表
+   */
   public List<XNode> evalNodes(Object root, String expression) {
     List<XNode> xnodes = new ArrayList<>();
+    //1.获得Node数组
     NodeList nodes = (NodeList) evaluate(expression, root, XPathConstants.NODESET);
+    //2.封装成XNode数组，主要为了动态值的替换。
     for (int i = 0; i < nodes.getLength(); i++) {
       xnodes.add(new XNode(this, nodes.item(i), variables));
     }
@@ -234,6 +251,13 @@ public class XPathParser {
     return new XNode(this, node, variables);
   }
 
+  /**
+   * 获取指定元素或节点的值
+   * @param expression 表达式
+   * @param root 指定节点
+   * @param returnType 返回类型
+   * @return 值
+   */
   private Object evaluate(String expression, Object root, QName returnType) {
     try {
       return xpath.evaluate(expression, root, returnType);
@@ -243,14 +267,14 @@ public class XPathParser {
   }
 
   /**
-   * 构造器调用方法，初始化Document对象
-   * @param inputSource
-   * @return
+   * 构造器调用方法，初始化Document对象，将 XML 文件解析成 Document 对象。
+   * @param inputSource xml的InputSource对象
+   * @return xml的Document对象
    */
   private Document createDocument(InputSource inputSource) {
     // important: this must only be called AFTER common constructor
     try {
-      //创建DocumentBuilderFactory对象
+      //1.创建DocumentBuilderFactory对象
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       //配置DocumentBuilderFactory对象
       factory.setValidating(validation);
@@ -261,7 +285,7 @@ public class XPathParser {
       factory.setCoalescing(false);
       factory.setExpandEntityReferences(true);
 
-      //创建DocumentBuilder对象
+      //2.创建DocumentBuilder对象
       DocumentBuilder builder = factory.newDocumentBuilder();
       //设置EntityResolver接口对象
       builder.setEntityResolver(entityResolver);
@@ -280,7 +304,7 @@ public class XPathParser {
         public void warning(SAXParseException exception) throws SAXException {
         }
       });
-      //加载xml文件
+      //3.加载xml文件
       return builder.parse(inputSource);
     } catch (Exception e) {
       throw new BuilderException("Error creating document instance.  Cause: " + e, e);

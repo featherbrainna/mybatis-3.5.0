@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.util.Locale;
 
 /**
+ * Mybatis自定义EntityResolver类。用于加载本地mybatis-3-config.dtd和mybatis-3-mapper.dtd文件
  * Offline entity resolver for the MyBatis DTDs
  *
  * @author Clinton Begin
@@ -38,8 +39,14 @@ public class XMLMapperEntityResolver implements EntityResolver {
   private static final String MYBATIS_CONFIG_SYSTEM = "mybatis-3-config.dtd";
   private static final String MYBATIS_MAPPER_SYSTEM = "mybatis-3-mapper.dtd";
 
-  //指定mybatis-config.xml文件和映射文件对应的DTD文件的具体位置
+  //指定mybatis-config.xml文件和映射文件对应的DTD文件的具体本地位置
+  /**
+   * 本地mybatis-config.dtd文件
+   */
   private static final String MYBATIS_CONFIG_DTD = "org/apache/ibatis/builder/xml/mybatis-3-config.dtd";
+  /**
+   * 本地mybatis-mapper.dtd文件
+   */
   private static final String MYBATIS_MAPPER_DTD = "org/apache/ibatis/builder/xml/mybatis-3-mapper.dtd";
 
   /**
@@ -58,8 +65,10 @@ public class XMLMapperEntityResolver implements EntityResolver {
         //查找systemId指定的DTD本地文档，并调用getInputSource()方法读取DTD本地文档
         String lowerCaseSystemId = systemId.toLowerCase(Locale.ENGLISH);
         if (lowerCaseSystemId.contains(MYBATIS_CONFIG_SYSTEM) || lowerCaseSystemId.contains(IBATIS_CONFIG_SYSTEM)) {
+          //返回本地mybatis-config.dtd文件
           return getInputSource(MYBATIS_CONFIG_DTD, publicId, systemId);
         } else if (lowerCaseSystemId.contains(MYBATIS_MAPPER_SYSTEM) || lowerCaseSystemId.contains(IBATIS_MAPPER_SYSTEM)) {
+          //返回本地mybatis-mapper.dtd文件
           return getInputSource(MYBATIS_MAPPER_DTD, publicId, systemId);
         }
       }
@@ -80,8 +89,10 @@ public class XMLMapperEntityResolver implements EntityResolver {
     InputSource source = null;
     if (path != null) {
       try {
+        //创建InputSource对象
         InputStream in = Resources.getResourceAsStream(path);
         source = new InputSource(in);
+        //设置publicId、systemId属性
         source.setPublicId(publicId);
         source.setSystemId(systemId);
       } catch (IOException e) {
