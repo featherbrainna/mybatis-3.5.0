@@ -322,21 +322,31 @@ public class Reflector {
     }
   }
 
+  /**
+   * 将Type对象转换为Class对象
+   * @param src Type对象
+   * @return 对应的Class对象
+   */
   private Class<?> typeToClass(Type src) {
     Class<?> result = null;
+    // 普通类型，直接使用类
     if (src instanceof Class) {
       result = (Class<?>) src;
+    // 泛型类型，使用泛型
     } else if (src instanceof ParameterizedType) {
       result = (Class<?>) ((ParameterizedType) src).getRawType();
+    // 泛型数组，获得具体类
     } else if (src instanceof GenericArrayType) {
       Type componentType = ((GenericArrayType) src).getGenericComponentType();
-      if (componentType instanceof Class) {
+      if (componentType instanceof Class) {// 数组元素是普通类型
         result = Array.newInstance((Class<?>) componentType, 0).getClass();
       } else {
-        Class<?> componentClass = typeToClass(componentType);
+        //不是普通类型
+        Class<?> componentClass = typeToClass(componentType);// 递归该方法，返回类
         result = Array.newInstance(componentClass, 0).getClass();
       }
     }
+    // 都不符合，使用 Object 类
     if (result == null) {
       result = Object.class;
     }
@@ -494,6 +504,7 @@ public class Reflector {
   }
 
   /**
+   * 判断是否可以修改可访问性。有权限返回true，无权限返回false
    * Checks whether can control member accessible.
    *
    * @return If can control member accessible, it return {@literal true}
