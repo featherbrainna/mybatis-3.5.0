@@ -15,19 +15,26 @@
  */
 package org.apache.ibatis.reflection.property;
 
-import java.util.Locale;
-
 import org.apache.ibatis.reflection.ReflectionException;
 
+import java.util.Locale;
+
 /**
+ * 属性名处理器
  * @author Clinton Begin
  */
 public final class PropertyNamer {
 
+  //静态工具类，不允许构造对象
   private PropertyNamer() {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 将方法名转换为属性名
+   * @param name 方法名
+   * @return 属性名
+   */
   public static String methodToProperty(String name) {
     if (name.startsWith("is")) {
       name = name.substring(2);
@@ -37,6 +44,7 @@ public final class PropertyNamer {
       throw new ReflectionException("Error parsing property name '" + name + "'.  Didn't start with 'is', 'get' or 'set'.");
     }
 
+    //处理属性名开头大写字符
     if (name.length() == 1 || (name.length() > 1 && !Character.isUpperCase(name.charAt(1)))) {
       name = name.substring(0, 1).toLowerCase(Locale.ENGLISH) + name.substring(1);
     }

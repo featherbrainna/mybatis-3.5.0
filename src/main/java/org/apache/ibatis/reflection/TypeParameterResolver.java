@@ -31,16 +31,19 @@ import java.util.Arrays;
 public class TypeParameterResolver {
 
   /**
+   * 解析字类段的类型
    * @return The field type as {@link Type}. If it has type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
    */
   public static Type resolveFieldType(Field field, Type srcType) {
+    //获取字段的声明类型
     Type fieldType = field.getGenericType();
     Class<?> declaringClass = field.getDeclaringClass();
     return resolveType(fieldType, srcType, declaringClass);
   }
 
   /**
+   * 解析方法返回值类型
    * @return The return type of the method as {@link Type}. If it has type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
    */
@@ -51,6 +54,7 @@ public class TypeParameterResolver {
   }
 
   /**
+   * 解析方法参数值类型
    * @return The parameter types of the method as an array of {@link Type}s. If they have type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
    */

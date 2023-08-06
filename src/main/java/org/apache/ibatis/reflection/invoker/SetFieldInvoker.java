@@ -15,11 +15,12 @@
  */
 package org.apache.ibatis.reflection.invoker;
 
-import java.lang.reflect.Field;
-
 import org.apache.ibatis.reflection.Reflector;
 
+import java.lang.reflect.Field;
+
 /**
+ * 封装Field映射对象的对象
  * @author Clinton Begin
  */
 public class SetFieldInvoker implements Invoker {
