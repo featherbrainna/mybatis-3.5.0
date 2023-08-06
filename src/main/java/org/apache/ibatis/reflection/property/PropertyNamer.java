@@ -20,7 +20,7 @@ import org.apache.ibatis.reflection.ReflectionException;
 import java.util.Locale;
 
 /**
- * 属性名处理器
+ * 属性名处理器。将方法名解析为属性名
  * @author Clinton Begin
  */
 public final class PropertyNamer {
@@ -52,14 +52,29 @@ public final class PropertyNamer {
     return name;
   }
 
+  /**
+   * 检测方法名是否对应属性名
+   * @param name
+   * @return
+   */
   public static boolean isProperty(String name) {
     return name.startsWith("get") || name.startsWith("set") || name.startsWith("is");
   }
 
+  /**
+   * 检测是否为getter方法
+   * @param name
+   * @return
+   */
   public static boolean isGetter(String name) {
     return name.startsWith("get") || name.startsWith("is");
   }
 
+  /**
+   * 检测是否为setter方法
+   * @param name
+   * @return
+   */
   public static boolean isSetter(String name) {
     return name.startsWith("set");
   }

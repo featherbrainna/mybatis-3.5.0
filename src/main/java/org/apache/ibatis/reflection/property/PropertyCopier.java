@@ -15,28 +15,42 @@
  */
 package org.apache.ibatis.reflection.property;
 
-import java.lang.reflect.Field;
-
 import org.apache.ibatis.reflection.Reflector;
 
+import java.lang.reflect.Field;
+
 /**
+ * 属性拷贝 工具类，
  * @author Clinton Begin
  */
 public final class PropertyCopier {
 
+  /**
+   * 构造器私有，静态工具类
+   */
   private PropertyCopier() {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 严格的同类属性拷贝方法，属于浅拷贝
+   * @param type 类类型
+   * @param sourceBean 源对象
+   * @param destinationBean 目标对象
+   */
   public static void copyBeanProperties(Class<?> type, Object sourceBean, Object destinationBean) {
     Class<?> parent = type;
     while (parent != null) {
+      //1.获取当前类的所有字段
       final Field[] fields = parent.getDeclaredFields();
+      //2.遍历处理字段
       for(Field field : fields) {
         try {
           try {
+            //3.复制字段值
             field.set(destinationBean, field.get(sourceBean));
           } catch (IllegalAccessException e) {
+            //设置访问修饰符
             if (Reflector.canControlMemberAccessible()) {
               field.setAccessible(true);
               field.set(destinationBean, field.get(sourceBean));
@@ -46,8 +60,10 @@ public final class PropertyCopier {
           }
         } catch (Exception e) {
           // Nothing useful to do, will only fail on final fields, which will be ignored.
+          //忽略异常
         }
       }
+      //4.获取父类，循环处理父类字段
       parent = parent.getSuperclass();
     }
   }
