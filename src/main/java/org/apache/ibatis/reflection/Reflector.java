@@ -126,7 +126,7 @@ public class Reflector {
    */
   private void addGetMethods(Class<?> cls) {
     Map<String, List<Method>> conflictingGetters = new HashMap<>();
-    //1.获取类的所有方法映射对象
+    //1.获取类的所有方法反射对象
     Method[] methods = getClassMethods(cls);
     //遍历所有方法
     for (Method method : methods) {
@@ -174,7 +174,7 @@ public class Reflector {
                     + propName + " in class " + winner.getDeclaringClass()
                     + ". This breaks the JavaBeans specification and can cause unpredictable results.");
           } else if (candidate.getName().startsWith("is")) {
-            //is方法为最终缓存的方法映射对象
+            //is方法为最终缓存的方法反射对象
             winner = candidate;
           }
           //3.2.winnerType是candidateType的子类则无需处理
@@ -200,7 +200,7 @@ public class Reflector {
   /**
    * 初始化填充单个属性对应的getMethods和getTypes字段
    * @param name 属性名
-   * @param method 方法映射对象
+   * @param method 方法反射对象
    */
   private void addGetMethod(String name, Method method) {
     //校验属性名合法性
@@ -219,7 +219,7 @@ public class Reflector {
    */
   private void addSetMethods(Class<?> cls) {
     Map<String, List<Method>> conflictingSetters = new HashMap<>();
-    //1.获取类的所有方法映射对象（包括本类和父类）
+    //1.获取类的所有方法反对象（包括本类和父类）
     Method[] methods = getClassMethods(cls);
     //遍历所有方法
     for (Method method : methods) {
@@ -312,7 +312,7 @@ public class Reflector {
   /**
    * 初始化填充单个属性对应的setMethods和setTypes字段
    * @param name 属性名
-   * @param method 方法映射对象
+   * @param method 方法反射对象
    */
   private void addSetMethod(String name, Method method) {
     if (isValidPropertyName(name)) {
@@ -360,7 +360,7 @@ public class Reflector {
   private void addFields(Class<?> clazz) {
     //1.获取本类定义的全部字段
     Field[] fields = clazz.getDeclaredFields();
-    //2.遍历字段映射对象
+    //2.遍历字段反射对象
     for (Field field : fields) {
       //当setMethods集合不包含同名属性时，将其记录到setMethods集合和setType集合
       if (!setMethods.containsKey(field.getName())) {
@@ -388,7 +388,7 @@ public class Reflector {
 
   /**
    * 单个字段初始化填充setMethods和setTypes
-   * @param field 字段映射对象
+   * @param field 字段反射对象
    */
   private void addSetField(Field field) {
     //校验字段名是否合法
@@ -403,7 +403,7 @@ public class Reflector {
 
   /**
    * 单个字段初始化填充getMethods和getTypes
-   * @param field 字段映射对象
+   * @param field 字段反射对象
    */
   private void addGetField(Field field) {
     //校验字段名是否合法
@@ -421,7 +421,7 @@ public class Reflector {
   }
 
   /**
-   * 获取类的所有方法映射对象（包括所有权限修饰符的方法、包括所有接口和继承的父类的方法）
+   * 获取类的所有方法反射对象（包括所有权限修饰符的方法、包括所有接口和继承的父类的方法）
    * 顺序是先添加子类方法，再添加父类方法，与子类同签名的父类方法会被覆盖。（签名包括返回值、函数名、参数）
    * This method returns an array containing all methods
    * declared in this class and any superclass.
@@ -435,20 +435,20 @@ public class Reflector {
     //用于记录指定类中定义的全部方法的唯一签名以及对应的Method对象
     Map<String, Method> uniqueMethods = new HashMap<>();
     Class<?> currentClass = cls;
-    //currentClass类对象不为null且类不为Object时进行方法映射对象获取
+    //currentClass类对象不为null且类不为Object时进行方法反射对象获取
     while (currentClass != null && currentClass != Object.class) {
-      //1.获取本类的方法映射对象到uniqueMethods，不包括继承的方法映射对象
+      //1.获取本类的方法反射对象到uniqueMethods，不包括继承的方法反射对象
       addUniqueMethods(uniqueMethods, currentClass.getDeclaredMethods());
 
       // we also need to look for interface methods -
       // because the class may be abstract
-      //2.获取本类的接口的方法映射对象到uniqueMethods
+      //2.获取本类的接口的方法反射对象到uniqueMethods
       Class<?>[] interfaces = currentClass.getInterfaces();
       for (Class<?> anInterface : interfaces) {
         addUniqueMethods(uniqueMethods, anInterface.getMethods());
       }
 
-      //3.索引到父类，在下一轮循环处理父类的方法映射对象
+      //3.索引到父类，在下一轮循环处理父类的方法反射对象
       currentClass = currentClass.getSuperclass();
     }
 
@@ -458,9 +458,9 @@ public class Reflector {
   }
 
   /**
-   * 将方法映射对象集合加入uniqueMethods对象存储，加入的键方法签名是唯一的
+   * 将方法反射对象集合加入uniqueMethods对象存储，加入的键方法签名是唯一的
    * @param uniqueMethods map容器
-   * @param methods 方法映射对象集合
+   * @param methods 方法反射对象集合
    */
   private void addUniqueMethods(Map<String, Method> uniqueMethods, Method[] methods) {
     for (Method currentMethod : methods) {
