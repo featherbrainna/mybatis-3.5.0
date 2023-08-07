@@ -324,18 +324,19 @@ public class Reflector {
 
   /**
    * 将Type对象转换为Class对象
+   * 普通类返回普通类，泛型类型返回泛型原始类型，泛型数组返回数组类型的class，泛型变量类型返回Object.class。
    * @param src Type对象
    * @return 对应的Class对象
    */
   private Class<?> typeToClass(Type src) {
     Class<?> result = null;
-    // 普通类型，直接使用类
+    // 1.普通类型，直接使用类
     if (src instanceof Class) {
       result = (Class<?>) src;
-    // 泛型类型，使用泛型
+    // 2.泛型类型，使用泛型的原始类型
     } else if (src instanceof ParameterizedType) {
       result = (Class<?>) ((ParameterizedType) src).getRawType();
-    // 泛型数组，获得具体类
+    // 3.泛型数组，获得具体数组class
     } else if (src instanceof GenericArrayType) {
       Type componentType = ((GenericArrayType) src).getGenericComponentType();
       if (componentType instanceof Class) {// 数组元素是普通类型
@@ -346,7 +347,7 @@ public class Reflector {
         result = Array.newInstance(componentClass, 0).getClass();
       }
     }
-    // 都不符合，使用 Object 类
+    // 4.都不符合，使用 Object 类
     if (result == null) {
       result = Object.class;
     }
