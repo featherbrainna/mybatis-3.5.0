@@ -15,14 +15,15 @@
  */
 package org.apache.ibatis.reflection.wrapper;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
+ * 封装了Collection<Object>对象，除了集合相关的方法全部都不支持抛出异常UnsupportedOperationException
  * @author Clinton Begin
  */
 public class CollectionWrapper implements ObjectWrapper {
