@@ -3,8 +3,11 @@ package org.apache.ibatis.reflection;
 import org.apache.ibatis.reflection.property.PropertyCopier;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author 王忠义
@@ -23,15 +26,34 @@ public class MyTest {
     }
 
     @Test
-    void test2() {
+    void test2() throws NoSuchFieldException {
         C c = new C();
-        Reflector reflector = new Reflector(c.getClass());
-        Class<?> list = reflector.getGetterType("list");
-        System.out.println(list.toString());
+//        Reflector reflector = new Reflector(c.getClass());
+//        Class<?> list = reflector.getGetterType("list");
+//        System.out.println(list.toString());
+        Class<? extends C> aClass = c.getClass();
+        Field field = aClass.getField("list");
+        //测试获取字段的声明类型
+        Type type = field.getGenericType();
+        System.out.println(type);
+        Type type1 = TypeParameterResolver.resolveFieldType(field, aClass);
+        System.out.println(type1.getTypeName());
+    }
+
+    @Test
+    void test3() throws NoSuchFieldException {
+        System.out.println(SubClassA.class.getSuperclass());
+        //只返回public的字段反射对象
+        Field field = SubClassA.class.getSuperclass().getDeclaredField("map");
+        System.out.println(field.getGenericType());
+
+        //特点，可以解析出子类对父类字段类型的定义的变化！！！
+        Type type = TypeParameterResolver.resolveFieldType(field, SubClassA.class);
+        System.out.println(type);
     }
 }
 
-class A{
+class A {
     String name;
 
     public A() {
@@ -68,7 +90,7 @@ class B{
     }
 }
 class C{
-    List<Integer> list = new ArrayList<>();
+    public List<Integer> list = new ArrayList<>();
 
     public C(List<Integer> list) {
         this.list = list;
@@ -83,5 +105,31 @@ class C{
 
     public void setList(List<Integer> list) {
         this.list = list;
+    }
+}
+class ClassA<K,V>{
+    private Map<K,V> map;
+
+    public ClassA() {
+    }
+
+    public ClassA(Map<K, V> map) {
+        this.map = map;
+    }
+
+    public Map<K, V> getMap() {
+        return map;
+    }
+
+    public void setMap(Map<K, V> map) {
+        this.map = map;
+    }
+}
+class SubClassA<T> extends ClassA<T,T>{
+    public SubClassA() {
+    }
+
+    public SubClassA(Map<T, T> map) {
+        super(map);
     }
 }
