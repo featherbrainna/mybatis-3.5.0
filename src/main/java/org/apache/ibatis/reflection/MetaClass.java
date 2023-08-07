@@ -141,7 +141,7 @@ public class MetaClass {
   /**
    * 创建该类指定表达式解析器对象的MetaClass对象
    * @param prop 表达式解析器对象
-   * @return
+   * @return 当前prop的MetaClass对象（不会递归到子属性）
    */
   private MetaClass metaClassForProperty(PropertyTokenizer prop) {
     //委托本类的getGetterType()方法实现获取属性的类类型
