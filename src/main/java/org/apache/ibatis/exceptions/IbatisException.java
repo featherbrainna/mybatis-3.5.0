@@ -16,6 +16,7 @@
 package org.apache.ibatis.exceptions;
 
 /**
+ * 实现RuntimeException类，IBatis的异常基类
  * @author Clinton Begin
  */
 @Deprecated

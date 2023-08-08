@@ -18,6 +18,8 @@ package org.apache.ibatis.exceptions;
 import org.apache.ibatis.executor.ErrorContext;
 
 /**
+ * 异常工厂
+ * 定义了特殊格式的异常信息
  * @author Clinton Begin
  */
 public class ExceptionFactory {
@@ -26,7 +28,14 @@ public class ExceptionFactory {
     // Prevent Instantiation
   }
 
+  /**
+   * 包装异常为PersistenceException
+   * @param message 消息
+   * @param e 发生的异常
+   * @return
+   */
   public static RuntimeException wrapException(String message, Exception e) {
+    //创建特殊message格式的PersistenceException异常
     return new PersistenceException(ErrorContext.instance().message(message).cause(e).toString(), e);
   }
 
