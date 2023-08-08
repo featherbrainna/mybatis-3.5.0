@@ -19,22 +19,35 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 
 /**
+ * 异常工具类
  * @author Clinton Begin
  */
 public class ExceptionUtil {
 
+  /**
+   * 私有化构造器，静态工具类
+   */
   private ExceptionUtil() {
     // Prevent Instantiation
   }
 
+  /**
+   * 去掉异常的包装
+   * @param wrapped 被包装的异常
+   * @return 去除包装后的异常
+   */
   public static Throwable unwrapThrowable(Throwable wrapped) {
     Throwable unwrapped = wrapped;
+    //循环处理包装的异常，直至异常类型非InvocationTargetException和UndeclaredThrowableException
     while (true) {
       if (unwrapped instanceof InvocationTargetException) {
+        //1.InvocationTargetException去包装
         unwrapped = ((InvocationTargetException) unwrapped).getTargetException();
       } else if (unwrapped instanceof UndeclaredThrowableException) {
+        //2.UndeclaredThrowableException去包装
         unwrapped = ((UndeclaredThrowableException) unwrapped).getUndeclaredThrowable();
       } else {
+        //3.其他类型无需去包装
         return unwrapped;
       }
     }

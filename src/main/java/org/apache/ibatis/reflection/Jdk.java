@@ -18,11 +18,13 @@ package org.apache.ibatis.reflection;
 import org.apache.ibatis.io.Resources;
 
 /**
+ * 检查类是否加载成功
  * To check the existence of version dependent classes.
  */
 public class Jdk {
 
   /**
+   * 标记是否成功加载类java.lang.reflect.Parameter
    * <code>true</code> if <code>java.lang.reflect.Parameter</code> is available.
    * @deprecated Since 3.5.0, Will remove this field at feature(next major version up)
    */
@@ -32,6 +34,7 @@ public class Jdk {
   static {
     boolean available = false;
     try {
+      //加载此类时先手动加载类java.lang.reflect.Parameter
       Resources.classForName("java.lang.reflect.Parameter");
       available = true;
     } catch (ClassNotFoundException e) {
@@ -41,6 +44,7 @@ public class Jdk {
   }
 
   /**
+   * 标记是否成功加载类dateAndTimeApiExists
    * @deprecated Since 3.5.0, Will remove this field at feature(next major version up)
    */
   @Deprecated
@@ -49,6 +53,7 @@ public class Jdk {
   static {
     boolean available = false;
     try {
+      //加载此类时先手动加载类java.time.Clock
       Resources.classForName("java.time.Clock");
       available = true;
     } catch (ClassNotFoundException e) {
@@ -58,6 +63,7 @@ public class Jdk {
   }
 
   /**
+   * 标记是否成功加载类java.util.Optional
    * @deprecated Since 3.5.0, Will remove this field at feature(next major version up)
    */
   @Deprecated
@@ -66,6 +72,7 @@ public class Jdk {
   static {
     boolean available = false;
     try {
+      //加载此类时先手动加载类java.util.Optional
       Resources.classForName("java.util.Optional");
       available = true;
     } catch (ClassNotFoundException e) {
@@ -74,6 +81,9 @@ public class Jdk {
     optionalExists = available;
   }
 
+  /**
+   * 私有化构造器
+   */
   private Jdk() {
     super();
   }

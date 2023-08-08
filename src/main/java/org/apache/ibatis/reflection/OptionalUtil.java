@@ -19,6 +19,7 @@ package org.apache.ibatis.reflection;
 import java.util.Optional;
 
 /**
+ * Optional对象的工具类
  * @deprecated Since 3.5.0, Will remove this class at future(next major version up).
  */
 @Deprecated

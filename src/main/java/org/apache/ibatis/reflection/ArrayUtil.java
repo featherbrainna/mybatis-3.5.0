@@ -18,11 +18,13 @@ package org.apache.ibatis.reflection;
 import java.util.Arrays;
 
 /**
+ * 数组工具类。主要为不同类型数组对象提供了通用的hashCode, equals and toString方法。
  * Provides hashCode, equals and toString methods that can handle array.
  */
 public class ArrayUtil {
 
   /**
+   * 返回对象的hashcode
    * Returns a hash code for {@code obj}.
    *
    * @param obj
@@ -30,15 +32,20 @@ public class ArrayUtil {
    * @return A hash code of {@code obj} or 0 if {@code obj} is <code>null</code>
    */
   public static int hashCode(Object obj) {
+    //1.对象为null返回0
     if (obj == null) {
       // for consistency with Arrays#hashCode() and Objects#hashCode()
       return 0;
     }
+    //2.对象为普通对象类型，使用对象的方法生成hashcode
     final Class<?> clazz = obj.getClass();
     if (!clazz.isArray()) {
       return obj.hashCode();
     }
+    //3.对象为数组类型
+    //获取元素类型
     final Class<?> componentType = clazz.getComponentType();
+    //根据元素类型来调用Arrays.hashCode计算hash值
     if (long.class.equals(componentType)) {
       return Arrays.hashCode((long[]) obj);
     } else if (int.class.equals(componentType)) {
@@ -61,6 +68,7 @@ public class ArrayUtil {
   }
 
   /**
+   * 判断thisObj与thatObj是否相等
    * Compares two objects. Returns <code>true</code> if
    * <ul>
    * <li>{@code thisObj} and {@code thatObj} are both <code>null</code></li>
@@ -77,18 +85,23 @@ public class ArrayUtil {
    * @return <code>true</code> if two objects are equal; <code>false</code> otherwise.
    */
   public static boolean equals(Object thisObj, Object thatObj) {
+    //1.thisObj为null时，返回取决于thatObj是否为null
     if (thisObj == null) {
       return thatObj == null;
     } else if (thatObj == null) {
+      //2.thatObj为null时，返回false
       return false;
     }
+    //3.先比较两者类型，类型不同返回false
     final Class<?> clazz = thisObj.getClass();
     if (!clazz.equals(thatObj.getClass())) {
       return false;
     }
+    //3.比较同类型普通对象是否相等
     if (!clazz.isArray()) {
       return thisObj.equals(thatObj);
     }
+    //4.比较同类型数组对象是否相等
     final Class<?> componentType = clazz.getComponentType();
     if (long.class.equals(componentType)) {
       return Arrays.equals((long[]) thisObj, (long[]) thatObj);
@@ -112,6 +125,7 @@ public class ArrayUtil {
   }
 
   /**
+   * obj的toString方法
    * If the {@code obj} is an array, toString() method of {@link Arrays} is called. Otherwise
    * {@link Object#toString()} is called. Returns "null" if {@code obj} is <code>null</code>.
    *
@@ -120,13 +134,16 @@ public class ArrayUtil {
    * @return String representation of the {@code obj}.
    */
   public static String toString(Object obj) {
+    //1.obj为null时返回null字符串
     if (obj == null) {
       return "null";
     }
+    //2.普通对象时，使用普通对象的toString方法
     final Class<?> clazz = obj.getClass();
     if (!clazz.isArray()) {
       return obj.toString();
     }
+    //3.数组对象时，依据元素类型使用数组的Arrays.toString方法
     final Class<?> componentType = obj.getClass().getComponentType();
     if (long.class.equals(componentType)) {
       return Arrays.toString((long[]) obj);
