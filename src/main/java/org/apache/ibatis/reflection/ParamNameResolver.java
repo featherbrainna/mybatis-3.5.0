@@ -131,7 +131,9 @@ public class ParamNameResolver {
   }
 
   /**
-   * 获得参数名与值的映射
+   * 获得参数名与值的映射。除构造器外唯一公共方法
+   * 映射组合 1 ：KEY：参数名，VALUE：参数值
+   * 映射组合 2 ：KEY：GENERIC_NAME_PREFIX + 参数顺序，VALUE ：参数值
    * @param args 参数值数组
    * <p>
    * A single non-special parameter is returned without a name.
