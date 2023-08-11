@@ -214,7 +214,7 @@ public class UnpooledDataSource implements DataSource {
     this.defaultTransactionIsolationLevel = defaultTransactionIsolationLevel;
   }
 
-  //######################################## 核心本类实现 ###################################################
+  //######################################## 核心本类底层实现 ###################################################
 
   /**
    * 获取连接前封装driverProperties、username、password到props

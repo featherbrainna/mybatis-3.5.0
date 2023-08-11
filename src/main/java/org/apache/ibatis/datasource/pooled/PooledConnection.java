@@ -25,6 +25,7 @@ import java.sql.SQLException;
 
 /**
  * 动态代理的调用处理器 兼动态代理对象创建存储功能
+ * 实现 InvocationHandler 接口，池化的 Connection 对象
  * @author Clinton Begin
  */
 class PooledConnection implements InvocationHandler {
@@ -76,6 +77,7 @@ class PooledConnection implements InvocationHandler {
   private boolean valid;
 
   /**
+   * 唯一构造器
    * Constructor for SimplePooledConnection that uses the Connection and PooledDataSource passed in
    *
    * @param connection - the connection that is to be presented as a pooled connection

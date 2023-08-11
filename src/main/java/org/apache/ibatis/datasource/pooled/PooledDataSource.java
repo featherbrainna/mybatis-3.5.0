@@ -70,6 +70,7 @@ public class PooledDataSource implements DataSource {
   protected int poolTimeToWait = 20000;
   /**
    * 最大坏连接数量
+   * 如果这个线程获取到的是一个坏的连接，那么这个数据源允许这个线程尝试重新获取一个新的连接，但是这个重新尝试的次数不应该超过 poolMaximumIdleConnections 与 poolMaximumLocalBadConnectionTolerance 之和
    */
   protected int poolMaximumLocalBadConnectionTolerance = 3;
   /**
@@ -81,6 +82,8 @@ public class PooledDataSource implements DataSource {
    */
   protected boolean poolPingEnabled;
   /**
+   * 配置 poolPingQuery 的频率
+   * 默认值：0（即所有连接每一时刻都被侦测 — 当然仅当 poolPingEnabled 为 true 时适用）
    * 当连接超过poolPingConnectionsNotUsedFor毫秒未使用时，会发送一次测试SQL语句，检测连接是否正常
    */
   protected int poolPingConnectionsNotUsedFor;
@@ -413,7 +416,7 @@ public class PooledDataSource implements DataSource {
     synchronized (state) {
       //1.从activeConnections集合中移除PooledConnection对象
       state.activeConnections.remove(conn);
-      //2.连接有效
+      //2.连接有效，通过ping操作检测连接是否有效
       if (conn.isValid()) {
         //3.空闲连接数小于最大空闲连接数 且 连接类型匹配当前连接池
         if (state.idleConnections.size() < poolMaximumIdleConnections && conn.getConnectionTypeCode() == expectedConnectionTypeCode) {
@@ -430,6 +433,7 @@ public class PooledDataSource implements DataSource {
           newConn.setCreatedTimestamp(conn.getCreatedTimestamp());
           newConn.setLastUsedTimestamp(conn.getLastUsedTimestamp());
           //3.4将原PooledConnection设置为无效
+          // 为什么这里要创建新的 PooledConnection 对象呢？避免使用方还在使用 conn ，通过将它设置为失效，万一再次调用，会抛出异常
           conn.invalidate();
           if (log.isDebugEnabled()) {
             log.debug("Returned connection " + newConn.getRealHashCode() + " to pool.");
@@ -594,6 +598,8 @@ public class PooledDataSource implements DataSource {
             localBadConnectionCount++;
             //5.2将conn重置为null，下一循环继续获取连接
             conn = null;
+            //这个数据源允许这个线程尝试重新获取一个新的连接，但是这个重新尝试的次数不应该超过poolMaximumIdleConnections + poolMaximumLocalBadConnectionTolerance
+            //否则抛出异常
             if (localBadConnectionCount > (poolMaximumIdleConnections + poolMaximumLocalBadConnectionTolerance)) {
               if (log.isDebugEnabled()) {
                 log.debug("PooledDataSource: Could not get a good connection to the database.");
@@ -691,8 +697,11 @@ public class PooledDataSource implements DataSource {
    * @return The 'real' connection
    */
   public static Connection unwrapConnection(Connection conn) {
+    // 如果传入的是被代理的连接
     if (Proxy.isProxyClass(conn.getClass())) {
+      // 获取 InvocationHandler 对象
       InvocationHandler handler = Proxy.getInvocationHandler(conn);
+      // 如果是 PooledConnection 对象，则获取真实的连接
       if (handler instanceof PooledConnection) {
         return ((PooledConnection) handler).getRealConnection();
       }
