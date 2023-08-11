@@ -19,23 +19,64 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 管理 {@link PooledConnection} 对象状态的组件
+ * 只有get方法和protected字段，和一个定制的toString方法
  * @author Clinton Begin
  */
 public class PoolState {
 
+  /**
+   * 记录属于哪个PooledDataSource对象
+   */
   protected PooledDataSource dataSource;
 
+  /**
+   * 空闲的PooledConnection集合
+   */
   protected final List<PooledConnection> idleConnections = new ArrayList<>();
+  /**
+   * 活跃的PooledConnection集合
+   */
   protected final List<PooledConnection> activeConnections = new ArrayList<>();
+  /**
+   * （已建立的）请求数据库连接的次数
+   */
   protected long requestCount = 0;
+  /**
+   * 获取（已建立的）连接的累积时间
+   */
   protected long accumulatedRequestTime = 0;
+  /**
+   * accumulatedCheckoutTime记录了所有连接积累的checkoutTime时长
+   * checkoutTime表示应用从连接池取出连接，到归还连接这段时长
+   */
   protected long accumulatedCheckoutTime = 0;
+  /**
+   * 当连接长时间未归还给连接池时，会被认为该连接超时
+   * claimedOverdueConnectionCount 记录了超时的连接个数
+   */
   protected long claimedOverdueConnectionCount = 0;
+  /**
+   * 累积超时时间
+   */
   protected long accumulatedCheckoutTimeOfOverdueConnections = 0;
+  /**
+   * 累积等待时间
+   */
   protected long accumulatedWaitTime = 0;
+  /**
+   * 等待次数
+   */
   protected long hadToWaitCount = 0;
+  /**
+   * 无效的连接数
+   */
   protected long badConnectionCount = 0;
 
+  /**
+   * 构造器，初始化属于哪个dataSource的状态，即初始化dataSource字段
+   * @param dataSource
+   */
   public PoolState(PooledDataSource dataSource) {
     this.dataSource = dataSource;
   }
@@ -82,6 +123,10 @@ public class PoolState {
     return activeConnections.size();
   }
 
+  /**
+   * 定制的PoolState的toString方法，包含大量信息
+   * @return
+   */
   @Override
   public synchronized String toString() {
     StringBuilder builder = new StringBuilder();

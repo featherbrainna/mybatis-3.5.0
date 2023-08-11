@@ -18,6 +18,7 @@ package org.apache.ibatis.datasource;
 import org.apache.ibatis.exceptions.PersistenceException;
 
 /**
+ * DataSource模块的异常
  * @author Clinton Begin
  */
 public class DataSourceException extends PersistenceException {
