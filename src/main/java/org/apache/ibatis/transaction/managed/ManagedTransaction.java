@@ -15,16 +15,18 @@
  */
 package org.apache.ibatis.transaction.managed;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
+import org.apache.ibatis.transaction.jdbc.JdbcTransaction;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
+ * 容器管理事务
  * {@link Transaction} that lets the container manage the full lifecycle of the transaction.
  * Delays connection retrieval until getConnection() is called.
  * Ignores all commit or rollback requests.
@@ -38,9 +40,22 @@ public class ManagedTransaction implements Transaction {
 
   private static final Log log = LogFactory.getLog(ManagedTransaction.class);
 
+  /**
+   * 数据库所属的DataSource
+   */
   private DataSource dataSource;
+  /**
+   * 事务隔离级别
+   */
   private TransactionIsolationLevel level;
+  /**
+   * 事务对应的数据库连接
+   */
   private Connection connection;
+  /**
+   * 连接是否关闭标志
+   * 这个属性是和 {@link JdbcTransaction} 不同的
+   */
   private final boolean closeConnection;
 
   public ManagedTransaction(Connection connection, boolean closeConnection) {
@@ -54,6 +69,11 @@ public class ManagedTransaction implements Transaction {
     this.closeConnection = closeConnection;
   }
 
+  /**
+   * 获取连接
+   * @return
+   * @throws SQLException
+   */
   @Override
   public Connection getConnection() throws SQLException {
     if (this.connection == null) {
@@ -72,8 +92,13 @@ public class ManagedTransaction implements Transaction {
     // Does nothing
   }
 
+  /**
+   * 关闭连接
+   * @throws SQLException
+   */
   @Override
   public void close() throws SQLException {
+    // 如果开启关闭连接功能，则关闭连接
     if (this.closeConnection && this.connection != null) {
       if (log.isDebugEnabled()) {
         log.debug("Closing JDBC Connection [" + this.connection + "]");
@@ -82,6 +107,10 @@ public class ManagedTransaction implements Transaction {
     }
   }
 
+  /**
+   * 设置连接自段
+   * @throws SQLException
+   */
   protected void openConnection() throws SQLException {
     if (log.isDebugEnabled()) {
       log.debug("Opening JDBC Connection");

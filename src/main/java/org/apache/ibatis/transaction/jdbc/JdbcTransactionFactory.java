@@ -15,14 +15,13 @@
  */
 package org.apache.ibatis.transaction.jdbc;
 
-import java.sql.Connection;
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.util.Properties;
 
 /**
  * Creates {@link JdbcTransaction} instances.
@@ -37,11 +36,23 @@ public class JdbcTransactionFactory implements TransactionFactory {
   public void setProperties(Properties props) {
   }
 
+  /**
+   * 委托JdbcTransaction构造器创建事务
+   * @param conn Existing database connection
+   * @return
+   */
   @Override
   public Transaction newTransaction(Connection conn) {
     return new JdbcTransaction(conn);
   }
 
+  /**
+   * 委托JdbcTransaction构造器创建事务
+   * @param ds
+   * @param level Desired isolation level
+   * @param autoCommit Desired autocommit
+   * @return
+   */
   @Override
   public Transaction newTransaction(DataSource ds, TransactionIsolationLevel level, boolean autoCommit) {
     return new JdbcTransaction(ds, level, autoCommit);

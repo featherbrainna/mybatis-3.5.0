@@ -15,14 +15,13 @@
  */
 package org.apache.ibatis.transaction.managed;
 
-import java.sql.Connection;
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
 import org.apache.ibatis.session.TransactionIsolationLevel;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.transaction.TransactionFactory;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.util.Properties;
 
 /**
  * Creates {@link ManagedTransaction} instances.
@@ -35,6 +34,10 @@ public class ManagedTransactionFactory implements TransactionFactory {
 
   private boolean closeConnection = true;
 
+  /**
+   * 设置工厂属性
+   * @param props
+   */
   @Override
   public void setProperties(Properties props) {
     if (props != null) {
@@ -45,11 +48,23 @@ public class ManagedTransactionFactory implements TransactionFactory {
     }
   }
 
+  /**
+   * 委托ManagedTransaction构造器创建事务
+   * @param conn Existing database connection
+   * @return
+   */
   @Override
   public Transaction newTransaction(Connection conn) {
     return new ManagedTransaction(conn, closeConnection);
   }
 
+  /**
+   * 委托ManagedTransaction构造器创建事务
+   * @param ds
+   * @param level Desired isolation level
+   * @param autoCommit Desired autocommit
+   * @return
+   */
   @Override
   public Transaction newTransaction(DataSource ds, TransactionIsolationLevel level, boolean autoCommit) {
     // Silently ignores autocommit and isolation level, as managed transactions are entirely
