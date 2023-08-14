@@ -15,26 +15,39 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.cache.CacheKey;
+
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import org.apache.ibatis.cache.Cache;
-
 /**
+ * 先进先出缓存，固定大小超过时先进先出方式逐一清理
  * FIFO (first in, first out) cache decorator
  *
  * @author Clinton Begin
  */
 public class FifoCache implements Cache {
 
+  /**
+   * 底层被装饰的Cache对象
+   */
   private final Cache delegate;
+  /**
+   * key缓存插入顺序
+   * 用于记录key进入缓存的现后顺序，使用的是LinkedList<Object>类型的集合对象
+   */
   private final Deque<Object> keyList;
+  /**
+   * 记录了缓存项的上限，超过该值，则需要清理最老的缓存项
+   */
   private int size;
 
   public FifoCache(Cache delegate) {
     this.delegate = delegate;
     this.keyList = new LinkedList<>();
+    //默认缓存大小为1024
     this.size = 1024;
   }
 
@@ -52,9 +65,16 @@ public class FifoCache implements Cache {
     this.size = size;
   }
 
+  /**
+   * 插入缓存
+   * @param key Can be any object but usually it is a {@link CacheKey}
+   * @param value The result of a select.
+   */
   @Override
   public void putObject(Object key, Object value) {
+    //1.检测并清理缓存
     cycleKeyList(key);
+    //2.添加缓存项
     delegate.putObject(key, value);
   }
 
@@ -79,8 +99,14 @@ public class FifoCache implements Cache {
     return null;
   }
 
+  /**
+   * 检测并清理缓存
+   * @param key
+   */
   private void cycleKeyList(Object key) {
+    //记录key
     keyList.addLast(key);
+    //如果达到缓存上限，则清理最老的缓存项
     if (keyList.size() > size) {
       Object oldestKey = keyList.removeFirst();
       delegate.removeObject(oldestKey);

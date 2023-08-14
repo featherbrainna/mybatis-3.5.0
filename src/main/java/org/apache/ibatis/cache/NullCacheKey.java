@@ -16,6 +16,7 @@
 package org.apache.ibatis.cache;
 
 /**
+ * 不支持添加updateList集合元素的缓存key
  * @author Clinton Begin
  */
 public final class NullCacheKey extends CacheKey {

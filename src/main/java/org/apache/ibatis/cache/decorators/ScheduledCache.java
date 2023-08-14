@@ -15,17 +15,28 @@
  */
 package org.apache.ibatis.cache.decorators;
 
-import java.util.concurrent.locks.ReadWriteLock;
-
 import org.apache.ibatis.cache.Cache;
 
+import java.util.concurrent.locks.ReadWriteLock;
+
 /**
+ * 周期性清理缓存的装饰器
+ * 每次缓存操作时，都调用 #clearWhenStale() 方法，根据情况，是否清空全部缓存
  * @author Clinton Begin
  */
 public class ScheduledCache implements Cache {
 
+  /**
+   * 底层缓存
+   */
   private final Cache delegate;
+  /**
+   * 清理周期，默认 1 小时
+   */
   protected long clearInterval;
+  /**
+   * 上一次清理时间戳，默认初始化为对象的创建时间
+   */
   protected long lastClear;
 
   public ScheduledCache(Cache delegate) {
@@ -68,7 +79,9 @@ public class ScheduledCache implements Cache {
 
   @Override
   public void clear() {
+    //记录lastClear
     lastClear = System.currentTimeMillis();
+    //清空缓存
     delegate.clear();
   }
 
@@ -87,11 +100,17 @@ public class ScheduledCache implements Cache {
     return delegate.equals(obj);
   }
 
+  /**
+   * 底层定期清理方法
+   * @return
+   */
   private boolean clearWhenStale() {
+    //1.如果当前时间据上次清理时间超过了清理周期，则调用本类clear()方法并返回true，表示已清空缓存
     if (System.currentTimeMillis() - lastClear > clearInterval) {
       clear();
       return true;
     }
+    //2.如果在清理周期内，返回flase，表示未清空缓存
     return false;
   }
 

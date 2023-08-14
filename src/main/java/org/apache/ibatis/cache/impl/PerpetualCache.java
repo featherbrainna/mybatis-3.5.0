@@ -15,20 +15,28 @@
  */
 package org.apache.ibatis.cache.impl;
 
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.cache.CacheException;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.cache.CacheException;
-
 /**
+ * 基础缓存组件
+ * 装饰者模式中具体基础组件实现ConcreteComponent
  * @author Clinton Begin
  */
 public class PerpetualCache implements Cache {
 
+  /**
+   * Cache对象的唯一标识
+   */
   private final String id;
 
+  /**
+   * 底层用于记录缓存项的Map对象
+   */
   private Map<Object, Object> cache = new HashMap<>();
 
   public PerpetualCache(String id) {
@@ -83,6 +91,7 @@ public class PerpetualCache implements Cache {
     }
 
     Cache otherCache = (Cache) o;
+    //只关心id自段不关心cache自段
     return getId().equals(otherCache.getId());
   }
 
@@ -91,6 +100,7 @@ public class PerpetualCache implements Cache {
     if (getId() == null) {
       throw new CacheException("Cache instances require an ID.");
     }
+    //只关心id自段不关心cache自段
     return getId().hashCode();
   }
 

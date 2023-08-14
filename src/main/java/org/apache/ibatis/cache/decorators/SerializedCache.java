@@ -15,21 +15,16 @@
  */
 package org.apache.ibatis.cache.decorators;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamClass;
-import java.io.Serializable;
-import java.util.concurrent.locks.ReadWriteLock;
-
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
+import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.io.Resources;
 
+import java.io.*;
+import java.util.concurrent.locks.ReadWriteLock;
+
 /**
+ * 序列化缓存。为缓存值添加序列化和反序列化功能，使缓存的值为序列化的值，且每次反序列化的值为新对象
  * @author Clinton Begin
  */
 public class SerializedCache implements Cache {
@@ -50,8 +45,14 @@ public class SerializedCache implements Cache {
     return delegate.getSize();
   }
 
+  /**
+   * 新增缓存
+   * @param key Can be any object but usually it is a {@link CacheKey}
+   * @param object
+   */
   @Override
   public void putObject(Object key, Object object) {
+    //缓存值为空 或者 值对象可序列化时，序列化缓存值
     if (object == null || object instanceof Serializable) {
       delegate.putObject(key, serialize((Serializable) object));
     } else {
@@ -59,9 +60,15 @@ public class SerializedCache implements Cache {
     }
   }
 
+  /**
+   * 获取缓存
+   * @param key The key
+   * @return
+   */
   @Override
   public Object getObject(Object key) {
     Object object = delegate.getObject(key);
+    //反序列化对象
     return object == null ? null : deserialize((byte[]) object);
   }
 
@@ -90,17 +97,29 @@ public class SerializedCache implements Cache {
     return delegate.equals(obj);
   }
 
+  /**
+   * jdk原生序列化
+   * @param value
+   * @return
+   */
   private byte[] serialize(Serializable value) {
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
          ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+      //使用io流序列化对象
       oos.writeObject(value);
       oos.flush();
+      //返回序列化的结果
       return bos.toByteArray();
     } catch (Exception e) {
       throw new CacheException("Error serializing object.  Cause: " + e, e);
     }
   }
 
+  /**
+   * jdk原生反序列化
+   * @param value
+   * @return
+   */
   private Serializable deserialize(byte[] value) {
     Serializable result;
     try (ByteArrayInputStream bis = new ByteArrayInputStream(value);
