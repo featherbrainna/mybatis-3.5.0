@@ -21,12 +21,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
+ * Enum 类型的 TypeHandler 实现类
+ * java.lang.Enum 和 java.util.String 的互相转换。
  * @author Clinton Begin
  */
 public class EnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
 
+  /**
+   * 枚举类
+   */
   private final Class<E> type;
 
+  /**
+   * 构造器初始化枚举字段
+   * @param type
+   */
   public EnumTypeHandler(Class<E> type) {
     if (type == null) {
       throw new IllegalArgumentException("Type argument cannot be null");
@@ -36,6 +45,7 @@ public class EnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
 
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, E parameter, JdbcType jdbcType) throws SQLException {
+    // 将 Enum 转换成 String 类型
     if (jdbcType == null) {
       ps.setString(i, parameter.name());
     } else {
@@ -45,7 +55,9 @@ public class EnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
 
   @Override
   public E getNullableResult(ResultSet rs, String columnName) throws SQLException {
+    // 获得 String 的值
     String s = rs.getString(columnName);
+    // 将 String 转换成 Enum 类型
     return s == null ? null : Enum.valueOf(type, s);
   }
 

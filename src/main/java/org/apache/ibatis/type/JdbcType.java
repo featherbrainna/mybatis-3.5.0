@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * jdbc数据类型枚举类
  * @author Clinton Begin
  */
 public enum JdbcType {
@@ -69,10 +70,17 @@ public enum JdbcType {
   TIME_WITH_TIMEZONE(Types.TIME_WITH_TIMEZONE), // JDBC 4.2 JDK8
   TIMESTAMP_WITH_TIMEZONE(Types.TIMESTAMP_WITH_TIMEZONE); // JDBC 4.2 JDK8
 
+  /**
+   * 类型编码与 {@link Types} 中的静态字段编码一致
+   */
   public final int TYPE_CODE;
+  /**
+   * 编码与枚举的映射集合，在类加载时static代码块初始化
+   */
   private static Map<Integer,JdbcType> codeLookup = new HashMap<>();
 
   static {
+    //遍历枚举类所有的枚举值，以编码为key，以枚举值为value放入codeLookup映射集合中
     for (JdbcType type : JdbcType.values()) {
       codeLookup.put(type.TYPE_CODE, type);
     }
@@ -82,6 +90,11 @@ public enum JdbcType {
     this.TYPE_CODE = code;
   }
 
+  /**
+   * 静态方法根据编码查找枚举值
+   * @param code 枚举对应的编码
+   * @return
+   */
   public static JdbcType forCode(int code)  {
     return codeLookup.get(code);
   }

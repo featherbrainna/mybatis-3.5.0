@@ -31,12 +31,15 @@ public class LocalDateTimeTypeHandler extends BaseTypeHandler<LocalDateTime> {
   @Override
   public void setNonNullParameter(PreparedStatement ps, int i, LocalDateTime parameter, JdbcType jdbcType)
           throws SQLException {
+    //将LocalDateTime转换成Timestamp类型，设置到ps中
     ps.setTimestamp(i, Timestamp.valueOf(parameter));
   }
 
   @Override
   public LocalDateTime getNullableResult(ResultSet rs, String columnName) throws SQLException {
+    //从rs中获取Timestamp数据
     Timestamp timestamp = rs.getTimestamp(columnName);
+    //将Timestamp转换成LocalDateTime返回
     return getLocalDateTime(timestamp);
   }
 
@@ -52,6 +55,11 @@ public class LocalDateTimeTypeHandler extends BaseTypeHandler<LocalDateTime> {
     return getLocalDateTime(timestamp);
   }
 
+  /**
+   * 底层将java.sql.Timestamp转换成java.time.LocalDateTime
+   * @param timestamp
+   * @return
+   */
   private static LocalDateTime getLocalDateTime(Timestamp timestamp) {
     if (timestamp != null) {
       return timestamp.toLocalDateTime();

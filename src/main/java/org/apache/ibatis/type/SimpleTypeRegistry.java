@@ -22,12 +22,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * 简单类型注册表
  * @author Clinton Begin
  */
 public class SimpleTypeRegistry {
 
+  /**
+   * 简单类型的集合
+   */
   private static final Set<Class<?>> SIMPLE_TYPE_SET = new HashSet<>();
 
+  // 初始化常用类到 SIMPLE_TYPE_SET 中
   static {
     SIMPLE_TYPE_SET.add(String.class);
     SIMPLE_TYPE_SET.add(Byte.class);
@@ -44,11 +49,15 @@ public class SimpleTypeRegistry {
     SIMPLE_TYPE_SET.add(BigDecimal.class);
   }
 
+  /**
+   * 私有化构造器，静态工具类
+   */
   private SimpleTypeRegistry() {
     // Prevent Instantiation
   }
 
   /*
+   * 指定类型是否为简单类型
    * Tells us if the class passed in is a known common type
    *
    * @param clazz The class to check

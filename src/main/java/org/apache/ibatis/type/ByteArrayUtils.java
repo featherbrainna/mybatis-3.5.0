@@ -16,14 +16,23 @@
 package org.apache.ibatis.type;
 
 /**
+ * Byte 数组的工具类
  * @author Clinton Begin
  */
 class ByteArrayUtils {
 
+  /**
+   * 私有化构造器
+   */
   private ByteArrayUtils() {
     // Prevent Instantiation
   }
 
+  /**
+   * Byte[] => byte[]
+   * @param objects
+   * @return
+   */
   static byte[] convertToPrimitiveArray(Byte[] objects) {
     final byte[] bytes = new byte[objects.length];
     for (int i = 0; i < objects.length; i++) {
@@ -32,6 +41,11 @@ class ByteArrayUtils {
     return bytes;
   }
 
+  /**
+   * byte[] => Byte[]
+   * @param bytes
+   * @return
+   */
   static Byte[] convertToObjectArray(byte[] bytes) {
     final Byte[] objects = new Byte[bytes.length];
     for (int i = 0; i < bytes.length; i++) {
