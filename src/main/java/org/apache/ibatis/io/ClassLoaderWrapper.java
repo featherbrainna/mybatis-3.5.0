@@ -19,17 +19,28 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
+ * ClassLoader 包装器。可使用多个 ClassLoader 加载对应的资源，直到有一成功后返回资源。
  * A class to wrap access to multiple class loaders making them work as one
  *
  * @author Clinton Begin
  */
 public class ClassLoaderWrapper {
 
+  /**
+   * 应用指定的默认类加载器，本包可见字段
+   */
   ClassLoader defaultClassLoader;
+  /**
+   * System ClassLoader，本包可见字段
+   */
   ClassLoader systemClassLoader;
 
+  /**
+   * 本包可见构造器
+   */
   ClassLoaderWrapper() {
     try {
+      //初始化systemClassLoader字段
       systemClassLoader = ClassLoader.getSystemClassLoader();
     } catch (SecurityException ignored) {
       // AccessControlException on Google App Engine
@@ -101,6 +112,8 @@ public class ClassLoaderWrapper {
     return classForName(name, getClassLoaders(classLoader));
   }
 
+  //################################# 底层方法，调用ClassLoader的方法实现 ####################################################
+
   /**
    * Try to get a resource from a group of classloaders
    *
@@ -109,17 +122,19 @@ public class ClassLoaderWrapper {
    * @return the resource or null
    */
   InputStream getResourceAsStream(String resource, ClassLoader[] classLoader) {
+    //1.遍历 ClassLoader 数组
     for (ClassLoader cl : classLoader) {
+      //2.ClassLoader元素不为null
       if (null != cl) {
-
+        //2.1以绝对路径通过ClassLoader方法获得 InputStream
         // try to find the resource as passed
         InputStream returnValue = cl.getResourceAsStream(resource);
-
+        //2.2以相对路径通过ClassLoader方法获得 InputStream
         // now, some class loaders want this leading "/", so we'll add it and try again if we didn't find the resource
         if (null == returnValue) {
           returnValue = cl.getResourceAsStream("/" + resource);
         }
-
+        //2.3成功获得返回
         if (null != returnValue) {
           return returnValue;
         }
@@ -138,20 +153,20 @@ public class ClassLoaderWrapper {
   URL getResourceAsURL(String resource, ClassLoader[] classLoader) {
 
     URL url;
-
+    //1.遍历指定的classLoader数组
     for (ClassLoader cl : classLoader) {
-
+      //2.数组中的ClassLoader元素不为null时
       if (null != cl) {
-
+        //2.1调用 ClassLoader.getResource(resource)方法以 绝对路径 查找指定的资源
         // look for the resource as passed in...
         url = cl.getResource(resource);
-
+        //2.2调用 ClassLoader.getResource(resource)方法以 相对路径 查找指定的资源
         // ...but some class loaders want this leading "/", so we'll add it
         // and try again if we didn't find the resource
         if (null == url) {
           url = cl.getResource("/" + resource);
         }
-
+        //2.3查找到指定资源返回
         // "It's always in the last place I look for it!"
         // ... because only an idiot would keep looking for it after finding it, so stop looking already.
         if (null != url) {
@@ -161,7 +176,7 @@ public class ClassLoaderWrapper {
       }
 
     }
-
+    //3.未查找到返回null
     // didn't find it anywhere.
     return null;
 
@@ -176,15 +191,15 @@ public class ClassLoaderWrapper {
    * @throws ClassNotFoundException - Remember the wisdom of Judge Smails: Well, the world needs ditch diggers, too.
    */
   Class<?> classForName(String name, ClassLoader[] classLoader) throws ClassNotFoundException {
-
+    //1.遍历 ClassLoader 数组
     for (ClassLoader cl : classLoader) {
-
+      //2.ClassLoader元素不为null
       if (null != cl) {
 
         try {
-
+          //2.1通过此类加载器获得类
           Class<?> c = Class.forName(name, true, cl);
-
+          //2.2成功获得到，返回
           if (null != c) {
             return c;
           }
@@ -196,18 +211,23 @@ public class ClassLoaderWrapper {
       }
 
     }
-
+    //3.获取不到抛出异常
     throw new ClassNotFoundException("Cannot find class: " + name);
 
   }
 
+  /**
+   * 返回类加载器数组，该数组指明了类加载器的使用顺序
+   * @param classLoader 类加载器
+   * @return
+   */
   ClassLoader[] getClassLoaders(ClassLoader classLoader) {
     return new ClassLoader[]{
-        classLoader,
-        defaultClassLoader,
-        Thread.currentThread().getContextClassLoader(),
-        getClass().getClassLoader(),
-        systemClassLoader};
+        classLoader, //参数指定的类加载器
+        defaultClassLoader, //系统指定的默认类加载器
+        Thread.currentThread().getContextClassLoader(), //当前线程绑定的类加载器
+        getClass().getClassLoader(), //加载当前类所使用的类加载器
+        systemClassLoader}; //SystemClassLoader
   }
 
 }

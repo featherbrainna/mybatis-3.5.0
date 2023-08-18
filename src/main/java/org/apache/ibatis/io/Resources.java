@@ -26,20 +26,28 @@ import java.nio.charset.Charset;
 import java.util.Properties;
 
 /**
+ * Resource 工具类，基于classLoaderWrapper实现
  * A class to simplify access to resources through the classloader.
  *
  * @author Clinton Begin
  */
 public class Resources {
 
+  /**
+   * ClassLoaderWrapper 对象
+   */
   private static ClassLoaderWrapper classLoaderWrapper = new ClassLoaderWrapper();
 
   /**
+   * 字符集
    * Charset to use when calling getResourceAsReader.
    * null means use the system default.
    */
   private static Charset charset;
 
+  /**
+   * 本包可见构造器
+   */
   Resources() {
   }
 
@@ -53,6 +61,7 @@ public class Resources {
   }
 
   /**
+   * 修改类字段classLoaderWrapper中默认加载器
    * Sets the default classloader
    *
    * @param defaultClassLoader - the new default ClassLoader
@@ -60,6 +69,8 @@ public class Resources {
   public static void setDefaultClassLoader(ClassLoader defaultClassLoader) {
     classLoaderWrapper.defaultClassLoader = defaultClassLoader;
   }
+
+  //#################################### getResourceXXX方法 ########################################################
 
   /**
    * Returns the URL of the resource on the classpath
@@ -117,6 +128,7 @@ public class Resources {
   }
 
   /**
+   * 获得指定资源的 Properties
    * Returns a resource on the classpath as a Properties object
    *
    * @param resource The resource to find
@@ -125,7 +137,9 @@ public class Resources {
    */
   public static Properties getResourceAsProperties(String resource) throws IOException {
     Properties props = new Properties();
+    //1.通过getResourceAsStream读取流对象
     try (InputStream in = getResourceAsStream(resource)) {
+      //2.通过流对象加载Properties对象
       props.load(in);
     }
     return props;
@@ -148,6 +162,7 @@ public class Resources {
   }
 
   /**
+   * 获得指定资源的 Reader
    * Returns a resource on the classpath as a Reader object
    *
    * @param resource The resource to find
@@ -156,6 +171,7 @@ public class Resources {
    */
   public static Reader getResourceAsReader(String resource) throws IOException {
     Reader reader;
+    //调用getResourceAsStream获取 stream 对象，并通过 InputStreamReader 获取 reader 对象
     if (charset == null) {
       reader = new InputStreamReader(getResourceAsStream(resource));
     } else {
@@ -183,6 +199,7 @@ public class Resources {
   }
 
   /**
+   * 获得指定资源的 File
    * Returns a resource on the classpath as a File object
    *
    * @param resource The resource to find
@@ -190,6 +207,7 @@ public class Resources {
    * @throws java.io.IOException If the resource cannot be found or read
    */
   public static File getResourceAsFile(String resource) throws IOException {
+    //通过getResourceURL获取 URL 对象后，构造 File 对象
     return new File(getResourceURL(resource).getFile());
   }
 
@@ -205,7 +223,11 @@ public class Resources {
     return new File(getResourceURL(loader, resource).getFile());
   }
 
+  //####################################### getUrlXXX方法 #####################################################
+
   /**
+   * 获得指定 URL 对应的流对象。从 本地或者网络 获取流。
+   * 相较 getResourceXXX 方法获取范围更大
    * Gets a URL as an input stream
    *
    * @param urlString - the URL to get
@@ -213,12 +235,16 @@ public class Resources {
    * @throws java.io.IOException If the resource cannot be found or read
    */
   public static InputStream getUrlAsStream(String urlString) throws IOException {
+    // 1.创建URL对象
     URL url = new URL(urlString);
+    // 2.打开 URLConnection
     URLConnection conn = url.openConnection();
+    // 3.获取流对象
     return conn.getInputStream();
   }
 
   /**
+   * 获得指定 URL 的 Reader
    * Gets a URL as a Reader
    *
    * @param urlString - the URL to get
@@ -236,6 +262,7 @@ public class Resources {
   }
 
   /**
+   * 获得指定 URL 的 Properties
    * Gets a URL as a Properties object
    *
    * @param urlString - the URL to get
@@ -251,6 +278,7 @@ public class Resources {
   }
 
   /**
+   * 获得指定类名对应的类
    * Loads a class
    *
    * @param className - the class to fetch
@@ -265,6 +293,10 @@ public class Resources {
     return charset;
   }
 
+  /**
+   * 设置类字段charset字符集
+   * @param charset
+   */
   public static void setCharset(Charset charset) {
     Resources.charset = charset;
   }
