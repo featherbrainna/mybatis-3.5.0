@@ -146,7 +146,7 @@ public class ClassLoaderWrapper {
   /**
    * Get a resource as a URL using the current class path
    *
-   * @param resource    - the resource to locate
+   * @param resource    - the resource to locate 资源路径以“/”分隔，以类路径为根路径
    * @param classLoader - the class loaders to examine
    * @return the resource or null
    */
