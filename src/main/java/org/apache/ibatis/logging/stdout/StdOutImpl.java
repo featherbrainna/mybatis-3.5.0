@@ -18,6 +18,7 @@ package org.apache.ibatis.logging.stdout;
 import org.apache.ibatis.logging.Log;
 
 /**
+ * 控制台日志适配器，底层委托 System类 实现
  * @author Clinton Begin
  */
 public class StdOutImpl implements Log {

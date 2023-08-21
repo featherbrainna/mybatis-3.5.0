@@ -19,6 +19,8 @@ import org.apache.ibatis.logging.Log;
 import org.slf4j.Logger;
 
 /**
+ * Slf4j日志框架适配器(版本slf4j < 1.6)
+ * 底层依赖slf4j的 Logger 接口实现
  * @author Eduardo Macarron
  */
 class Slf4jLoggerImpl implements Log {

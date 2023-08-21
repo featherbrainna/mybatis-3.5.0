@@ -22,14 +22,22 @@ import org.slf4j.MarkerFactory;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
+ * Slf4j日志框架适配器(版本slf4j >= 1.6)
+ * 底层依赖slf4j的 LocationAwareLogger 接口实现
  * @author Eduardo Macarron
  */
 class Slf4jLocationAwareLoggerImpl implements Log {
 
   private static final Marker MARKER = MarkerFactory.getMarker(LogFactory.MARKER);
 
+  /**
+   * Slf4jImpl的全类名
+   */
   private static final String FQCN = Slf4jImpl.class.getName();
 
+  /**
+   * 底层真正的第三方 slf logger
+   */
   private final LocationAwareLogger logger;
 
   Slf4jLocationAwareLoggerImpl(LocationAwareLogger logger) {

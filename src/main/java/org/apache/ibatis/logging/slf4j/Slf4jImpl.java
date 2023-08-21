@@ -22,20 +22,31 @@ import org.slf4j.Marker;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
+ * Slf4j日志框架适配器
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
 public class Slf4jImpl implements Log {
 
+  /**
+   * 底层委托的Log（mybatis内部的）对象，由构造器根据参数初始化
+   */
   private Log log;
 
+  /**
+   * 构造器
+   * @param clazz
+   */
   public Slf4jImpl(String clazz) {
+    //1.使用 slf LoggerFactory 创建 slf Logger对象
     Logger logger = LoggerFactory.getLogger(clazz);
 
+    //2.如果是 LocationAwareLogger ，则创建 Slf4jLocationAwareLoggerImpl 对象（Mybatis提供）
     if (logger instanceof LocationAwareLogger) {
       try {
         // check for slf4j >= 1.6 method signature
         logger.getClass().getMethod("log", Marker.class, String.class, int.class, String.class, Object[].class, Throwable.class);
+        //3.初始化 log 字段
         log = new Slf4jLocationAwareLoggerImpl((LocationAwareLogger) logger);
         return;
       } catch (SecurityException e) {
@@ -46,6 +57,7 @@ public class Slf4jImpl implements Log {
     }
 
     // Logger is not LocationAwareLogger or slf4j version < 1.6
+    //2.否则，创建 Slf4jLoggerImpl 对象
     log = new Slf4jLoggerImpl(logger);
   }
 

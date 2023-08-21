@@ -15,16 +15,17 @@
  */
 package org.apache.ibatis.logging.jdbc;
 
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
+ * Statement代理由连接代理生成，代理打印JDBC调试日志
  * Statement proxy to add logging
  *
  * @author Clinton Begin
@@ -33,19 +34,38 @@ import org.apache.ibatis.reflection.ExceptionUtil;
  */
 public final class StatementLogger extends BaseJdbcLogger implements InvocationHandler {
 
+  /**
+   * 底层Statement对象
+   */
   private final Statement statement;
 
+  /**
+   * 私有化构造器，静态工具类
+   * @param stmt
+   * @param statementLog
+   * @param queryStack
+   */
   private StatementLogger(Statement stmt, Log statementLog, int queryStack) {
     super(statementLog, queryStack);
     this.statement = stmt;
   }
 
+  /**
+   * InvocationHandler 接口实现，代理扩展的任务方法
+   * @param proxy
+   * @param method
+   * @param params
+   * @return
+   * @throws Throwable
+   */
   @Override
   public Object invoke(Object proxy, Method method, Object[] params) throws Throwable {
     try {
+      //1.如果调用的是从 Object 继承的方法，则直接调用，不做任何其他处理
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, params);
       }
+      //2.如果调用的是 EXECUTE_METHODS 集合中的方法，则日志打印Executing: sql语句，返回代理ResultSet
       if (EXECUTE_METHODS.contains(method.getName())) {
         if (isDebugEnabled()) {
           debug(" Executing: " + removeBreakingWhitespace((String) params[0]), true);
@@ -57,9 +77,11 @@ public final class StatementLogger extends BaseJdbcLogger implements InvocationH
           return method.invoke(statement, params);
         }
       } else if ("getResultSet".equals(method.getName())) {
+        //3.如果调用的是 getResultSet 方法，则为 ResultSet 创建代理对象
         ResultSet rs = (ResultSet) method.invoke(statement, params);
         return rs == null ? null : ResultSetLogger.newInstance(rs, statementLog, queryStack);
       } else {
+        //4.其他方法，则直接反射调用
         return method.invoke(statement, params);
       }
     } catch (Throwable t) {
@@ -68,6 +90,7 @@ public final class StatementLogger extends BaseJdbcLogger implements InvocationH
   }
 
   /**
+   * 创建代理对象
    * Creates a logging version of a Statement
    *
    * @param stmt - the statement
