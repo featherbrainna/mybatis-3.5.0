@@ -22,11 +22,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 使用的结果集的注解。注解模式下需要使用xml文件中定义结果集map
  * @author Jeff Butler
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface ResultMap {
+  /**
+   * @return 结果集
+   */
   String[] value();
 }

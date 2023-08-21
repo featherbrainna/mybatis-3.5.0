@@ -24,11 +24,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 语言驱动的注解
  * @author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface Lang {
+  /**
+   * @return 驱动类
+   */
   Class<? extends LanguageDriver> value();
 }

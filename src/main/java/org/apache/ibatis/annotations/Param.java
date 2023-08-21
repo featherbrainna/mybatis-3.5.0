@@ -26,7 +26,11 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.PARAMETER)
+@Target(ElementType.PARAMETER)//方法参数注解
 public @interface Param {
+  /**
+   * 参数名
+   * @return
+   */
   String value();
 }

@@ -15,30 +15,45 @@
  */
 package org.apache.ibatis.annotations;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 import org.apache.ibatis.mapping.StatementType;
 
+import java.lang.annotation.*;
+
 /**
- * @author Clinton Begin
+ * 通过 SQL 语句获得主键的注解
+ * author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface SelectKey {
+  /**
+   * @return sql语句
+   */
   String[] statement();
 
+  /**
+   * @return Java 对象的属性
+   */
   String keyProperty();
 
+  /**
+   * @return 数据库的字段
+   */
   String keyColumn() default "";
 
+  /**
+   * @return 在插入语句执行前，还是执行后
+   */
   boolean before();
 
+  /**
+   * @return 返回类型
+   */
   Class<?> resultType();
 
+  /**
+   * @return {@link #statement()} 的类型
+   */
   StatementType statementType() default StatementType.PREPARED;
 }

@@ -26,7 +26,11 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface Delete {
+  /**
+   * 删除语句
+   * @return
+   */
   String[] value();
 }

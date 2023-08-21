@@ -22,13 +22,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 插入语句提供器
  * @author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface InsertProvider {
+  /**
+   * 提供的类
+   * @return
+   */
   Class<?> type();
 
+  /**
+   * 提供的方法
+   * @return
+   */
   String method();
 }

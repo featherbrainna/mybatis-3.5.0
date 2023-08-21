@@ -15,22 +15,29 @@
  */
 package org.apache.ibatis.annotations;
 
+import org.apache.ibatis.mapping.FetchType;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.apache.ibatis.mapping.FetchType;
-
 /**
+ * 复杂类型的单独属性值的注解
  * @author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface One {
+  /**
+   * @return 已映射语句（也就是映射器方法）的全限定名
+   */
   String select() default "";
 
+  /**
+   * @return 加载类型
+   */
   FetchType fetchType() default FetchType.DEFAULT;
 
 }

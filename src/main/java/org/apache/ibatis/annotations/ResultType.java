@@ -22,6 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 结果类型
  * This annotation can be used when a @Select method is using a
  * ResultHandler.  Those methods must have void return type, so
  * this annotation can be used to tell MyBatis what kind of object
@@ -32,7 +33,10 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface ResultType {
+  /**
+   * @return 类型
+   */
   Class<?> value();
 }

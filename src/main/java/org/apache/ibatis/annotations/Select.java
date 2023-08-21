@@ -26,7 +26,11 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法上使用的注解
 public @interface Select {
+  /**
+   * 查询语句
+   * @return
+   */
   String[] value();
 }

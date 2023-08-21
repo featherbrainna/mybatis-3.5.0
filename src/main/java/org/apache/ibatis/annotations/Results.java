@@ -22,15 +22,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 结果的注解
  * @author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface Results {
   /**
    * The name of the result map.
    */
   String id() default "";
+
+  /**
+   * {@link Result} 数组
+   * @return
+   */
   Result[] value() default {};
 }

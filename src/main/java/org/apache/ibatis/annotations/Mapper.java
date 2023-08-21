@@ -24,6 +24,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
+ * Mapper接口注解
  * Marker interface for MyBatis mappers
  *
  * @author Frank David Martínez

@@ -15,23 +15,21 @@
  */
 package org.apache.ibatis.annotations;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 import org.apache.ibatis.mapping.ResultSetType;
 import org.apache.ibatis.mapping.StatementType;
 
+import java.lang.annotation.*;
+
 /**
+ * 操作可选项
  * @author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target(ElementType.METHOD)//方法注解
 public @interface Options {
   /**
+   * 刷新缓存的策略的枚举类
    * The options for the {@link Options#flushCache()}.
    * The default is {@link FlushCachePolicy#DEFAULT}
    */
@@ -44,23 +42,53 @@ public @interface Options {
     FALSE
   }
 
+  /**
+   * @return 是否使用缓存
+   */
   boolean useCache() default true;
 
+  /**
+   * @return 刷新缓存的策略
+   */
   FlushCachePolicy flushCache() default FlushCachePolicy.DEFAULT;
 
+  /**
+   * @return 结果类型
+   */
   ResultSetType resultSetType() default ResultSetType.DEFAULT;
 
+  /**
+   * @return 语句类型
+   */
   StatementType statementType() default StatementType.PREPARED;
 
+  /**
+   * @return 加载数量
+   */
   int fetchSize() default -1;
 
+  /**
+   * @return 超时时间
+   */
   int timeout() default -1;
 
+  /**
+   * @return 是否生成主键
+   */
   boolean useGeneratedKeys() default false;
 
+  /**
+   * @return 主键在 Java 类中的属性
+   */
   String keyProperty() default "";
 
+  /**
+   * @return 主键在数据库中的字段
+   */
   String keyColumn() default "";
 
+  /**
+   * @return 结果集
+   */
   String resultSets() default "";
 }

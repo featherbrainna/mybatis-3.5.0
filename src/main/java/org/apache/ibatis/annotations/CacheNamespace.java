@@ -15,38 +15,55 @@
  */
 package org.apache.ibatis.annotations;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 import org.apache.ibatis.cache.decorators.LruCache;
 import org.apache.ibatis.cache.impl.PerpetualCache;
 
+import java.lang.annotation.*;
+
 /**
+ * 缓存空间配置的注解
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.TYPE)//类注解
 public @interface CacheNamespace {
+  /**
+   * @return 负责存储的 Cache 实现类
+   */
   Class<? extends org.apache.ibatis.cache.Cache> implementation() default PerpetualCache.class;
 
+  /**
+   * @return 负责过期的 cache 实现类
+   */
   Class<? extends org.apache.ibatis.cache.Cache> eviction() default LruCache.class;
 
+  /**
+   * @return 清空缓存的频率。0代表不清空
+   */
   long flushInterval() default 0;
 
+  /**
+   * @return 缓存容器的大小
+   */
   int size() default 1024;
 
+  /**
+   * @return 是否序列化。{@link org.apache.ibatis.cache.decorators.SerializedCache}
+   */
   boolean readWrite() default true;
 
+  /**
+   * @return 是否阻塞。{@link org.apache.ibatis.cache.decorators.BlockingCache}
+   */
   boolean blocking() default false;
 
   /**
    * Property values for a implementation object.
    * @since 3.4.2
+   *
+   * {@link Property} 数组
    */
   Property[] properties() default {};
 
