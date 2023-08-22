@@ -60,6 +60,8 @@ public class ParamNameResolver {
 
   /**
    * ParamNameResolver构造器
+   * Param注解参数名优先于默认参数名，默认参数名优先于参数索引(从0开始)。三者选其一进行names集合的填充
+   * 【注意】：默认参数名需要设置mybatis的全局设置
    * @param config mybatis配置对象
    * @param method 方法反射对象
    */
@@ -152,7 +154,7 @@ public class ParamNameResolver {
       //2.只有一个非注解的参数，直接返回首元素值
       return args[names.firstKey()];
     } else {
-      //3.声明参数名与参数值映射集合
+      //3.声明参数名与参数值映射集合，两种组合都必定同时存在，除非参数名与"param1"冲突
       // 组合 1 ：KEY：参数名，VALUE：参数值
       // 组合 2 ：KEY：GENERIC_NAME_PREFIX + 参数顺序，VALUE ：参数值
       final Map<String, Object> param = new ParamMap<>();
