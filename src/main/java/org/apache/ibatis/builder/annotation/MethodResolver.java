@@ -18,18 +18,32 @@ package org.apache.ibatis.builder.annotation;
 import java.lang.reflect.Method;
 
 /**
+ * 注解方法的处理器
  * @author Eduardo Macarron
  */
 public class MethodResolver {
+  /**
+   * MapperAnnotationBuilder 对象
+   */
   private final MapperAnnotationBuilder annotationBuilder;
+  /**
+   * Method 方法反射对象
+   */
   private final Method method;
 
+  /**
+   * 构造器
+   * 由 {@link MapperAnnotationBuilder#parse()} 调用
+   * @param annotationBuilder
+   * @param method
+   */
   public MethodResolver(MapperAnnotationBuilder annotationBuilder, Method method) {
     this.annotationBuilder = annotationBuilder;
     this.method = method;
   }
 
   public void resolve() {
+    // 执行注解方法的解析
     annotationBuilder.parseStatement(method);
   }
 

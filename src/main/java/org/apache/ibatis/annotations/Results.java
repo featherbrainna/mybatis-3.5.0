@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 结果的注解
+ * 结果的注解。类似 mapper.xml 文件中的 ResultMap 节点
  * @author Clinton Begin
  */
 @Documented

@@ -21,6 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * case注解。类似 mapper.xml 文件中的 case 节点
  * @author Clinton Begin
  */
 @Documented

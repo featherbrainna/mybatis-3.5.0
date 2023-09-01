@@ -25,7 +25,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 结果字段的注解
+ * 结果映射的注解。类似 mapper.xml 文件中的 result 节点
  * @author Clinton Begin
  */
 @Documented
@@ -63,12 +63,12 @@ public @interface Result {
   Class<? extends TypeHandler> typeHandler() default UnknownTypeHandler.class;
 
   /**
-   * @return {@link One} 注解
+   * @return {@link One} 注解。类似于 association 节点的 select 属性
    */
   One one() default @One;
 
   /**
-   * @return {@link Many} 注解
+   * @return {@link Many} 注解。类似于 collection 节点的 select 属性
    */
   Many many() default @Many;
 }
