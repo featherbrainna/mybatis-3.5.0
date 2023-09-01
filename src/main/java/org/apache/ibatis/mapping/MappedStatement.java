@@ -15,10 +15,6 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
@@ -28,39 +24,124 @@ import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.Configuration;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
+ * 映射的语句，每个 <select />、<insert />、<update />、<delete /> 对应一个 MappedStatement 对象。
+ * 比较特殊的是，<selectKey /> 解析后，也会对应一个 MappedStatement 对象。
  * @author Clinton Begin
  */
 public final class MappedStatement {
 
+  /**
+   * 资源引用地址
+   */
   private String resource;
+  /**
+   * Configuration 对象
+   */
   private Configuration configuration;
+  /**
+   * 节点完整编号
+   */
   private String id;
+  /**
+   * 这是尝试影响驱动程序每次批量返回的结果行数和这个设置值相等，默认值为 unset （依赖驱动）
+   */
   private Integer fetchSize;
+  /**
+   * 这个设置是在抛出异常之前，驱动程序等待数据库返回请求结果的秒数。默认值为 unset （依赖驱动）
+   */
   private Integer timeout;
+  /**
+   * 语句类型
+   * STATEMENT, PREPARED, CALLABLE
+   */
   private StatementType statementType;
+  /**
+   * 结果集类型
+   * DEFAULT、FORWARD_ONLY、SCROLL_INSENSITIVE、SCROLL_SENSITIVE
+   */
   private ResultSetType resultSetType;
+  /**
+   * SqlSource 对象，对应一条 SQL 语句
+   */
   private SqlSource sqlSource;
+  /**
+   * Cache对象
+   */
   private Cache cache;
+  /**
+   * ParameterMap对象
+   */
   private ParameterMap parameterMap;
+  /**
+   * ResultMap集合
+   */
   private List<ResultMap> resultMaps;
+  /**
+   * 将其设置为 true，任何时候只要语句被调用，都会导致本地缓存和二级缓存都会被清空，默认值：false。
+   */
   private boolean flushCacheRequired;
+  /**
+   * 标志是否使用缓存
+   */
   private boolean useCache;
   private boolean resultOrdered;
+  /**
+   * SQL 语句的类型，
+   * UNKNOWN, INSERT, UPDATE, DELETE, SELECT, FLUSH
+   */
   private SqlCommandType sqlCommandType;
+  /**
+   * KeyGenerator对象
+   */
   private KeyGenerator keyGenerator;
+  /**
+   * 主键属性
+   * （仅对 insert 和 update 有用）唯一标记一个属性，MyBatis 会通过 getGeneratedKeys 的返回值或者通过 insert 语句的 selectKey 子元素设置它的键值，默认：unset。
+   * 如果希望得到多个生成的列，也可以是逗号分隔的属性名称列表。
+   */
   private String[] keyProperties;
+  /**
+   * 主键表头
+   * （仅对 insert 和 update 有用）通过生成的键值设置表中的列名，这个设置仅在某些数据库（像 PostgreSQL）是必须的，当主键列不是表中的第一列的时候需要设置。
+   * 如果希望得到多个生成的列，也可以是逗号分隔的属性名称列表。
+   */
   private String[] keyColumns;
+  /**
+   * 是否有内嵌的 ResultMap
+   */
   private boolean hasNestedResultMaps;
+  /**
+   * 数据库id标识
+   */
   private String databaseId;
+  /**
+   * Log对象
+   */
   private Log statementLog;
+  /**
+   * LanguageDriver对象
+   */
   private LanguageDriver lang;
+  /**
+   * 这个设置仅对多结果集的情况适用，它将列出语句执行后返回的结果集并每个结果集给一个名称，名称是逗号分隔的。
+   */
   private String[] resultSets;
 
+  /**
+   * 构造器
+   */
   MappedStatement() {
     // constructor disabled
   }
 
+  /**
+   * MappedStatement 对象的构建器
+   */
   public static class Builder {
     private MappedStatement mappedStatement = new MappedStatement();
 
@@ -74,6 +155,7 @@ public final class MappedStatement {
       mappedStatement.resultMaps = new ArrayList<>();
       mappedStatement.sqlCommandType = sqlCommandType;
       mappedStatement.keyGenerator = configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType) ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;
+      // 获得 Log 对象
       String logId = id;
       if (configuration.getLogPrefix() != null) {
         logId = configuration.getLogPrefix() + id;
@@ -289,14 +371,23 @@ public final class MappedStatement {
     return resultSets;
   }
 
+  /**
+   * 从 MappedStatement 对象获取 BoundSql 对象
+   * @param parameterObject sql语句参数
+   * @return
+   */
   public BoundSql getBoundSql(Object parameterObject) {
+    //1.从 sqlSource 对象获取 BoundSql 对象
     BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
+    //忽略 ParameterMap 已废弃
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     if (parameterMappings == null || parameterMappings.isEmpty()) {
       boundSql = new BoundSql(configuration, boundSql.getSql(), parameterMap.getParameterMappings(), parameterObject);
     }
 
     // check for nested result maps in parameter mappings (issue #30)
+    //2.判断传入的参数中，是否有内嵌的结果 ResultMap 。如果有，则修改 hasNestedResultMaps 为 true
+    //存储过程相关，暂时无视
     for (ParameterMapping pm : boundSql.getParameterMappings()) {
       String rmId = pm.getResultMapId();
       if (rmId != null) {
@@ -310,6 +401,11 @@ public final class MappedStatement {
     return boundSql;
   }
 
+  /**
+   * 将 in 字符串使用 "," 分隔为字符串数组
+   * @param in 指定字符串
+   * @return 字符串数组
+   */
   private static String[] delimitedStringToArray(String in) {
     if (in == null || in.trim().length() == 0) {
       return null;

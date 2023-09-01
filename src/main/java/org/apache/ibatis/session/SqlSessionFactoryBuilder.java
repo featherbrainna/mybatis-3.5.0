@@ -15,17 +15,19 @@
  */
 package org.apache.ibatis.session;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.Properties;
-
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.exceptions.ExceptionFactory;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Properties;
+
 /**
+ * SqlSessionFactory 的具体构造器
+ * MyBatis 的初始化流程的入口类
  * Builds {@link SqlSession} instances.
  *
  * @author Clinton Begin
@@ -44,15 +46,27 @@ public class SqlSessionFactoryBuilder {
     return build(reader, null, properties);
   }
 
+  /**
+   * 构造 SqlSessionFactory 对象
+   * @param reader Reader对象
+   * @param environment environment环境
+   * @param properties properties对象
+   * @return SqlSessionFactory 对象
+   */
   public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
     try {
+      //1.创建 XMLConfigBuilder 对象，读取mybatis-config.xml配置文件
       XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
+      //2.执行 XML 解析，解析得到 Configuration 对象
+      //3.创建 DefaultSqlSessionFactory 对象
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
     } finally {
+      //4.清空线程错误上下文
       ErrorContext.instance().reset();
       try {
+        //4.关闭输入流
         reader.close();
       } catch (IOException e) {
         // Intentionally ignore. Prefer previous error.
@@ -74,7 +88,10 @@ public class SqlSessionFactoryBuilder {
 
   public SqlSessionFactory build(InputStream inputStream, String environment, Properties properties) {
     try {
+      //1.创建 XMLConfigBuilder 对象，读取mybatis-config.xml配置文件
       XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);
+      //2.执行 XML 解析，解析得到 Configuration 对象
+      //3.创建 DefaultSqlSessionFactory 对象
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
@@ -88,6 +105,11 @@ public class SqlSessionFactoryBuilder {
     }
   }
 
+  /**
+   * 所有 build 方法底层最终调用方法
+   * @param config Configuration全局mybatis配置对象
+   * @return SqlSessionFactory对象
+   */
   public SqlSessionFactory build(Configuration config) {
     return new DefaultSqlSessionFactory(config);
   }

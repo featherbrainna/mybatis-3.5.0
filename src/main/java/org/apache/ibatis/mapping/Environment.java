@@ -15,18 +15,34 @@
  */
 package org.apache.ibatis.mapping;
 
-import javax.sql.DataSource;
-
 import org.apache.ibatis.transaction.TransactionFactory;
 
+import javax.sql.DataSource;
+
 /**
+ * DB 环境
  * @author Clinton Begin
  */
 public final class Environment {
+  /**
+   * 环境id
+   */
   private final String id;
+  /**
+   * TransactionFactory 对象
+   */
   private final TransactionFactory transactionFactory;
+  /**
+   * DataSource 对象
+   */
   private final DataSource dataSource;
 
+  /**
+   * 构造器，初始化所有属性，其中指定属性为空则抛出异常
+   * @param id
+   * @param transactionFactory
+   * @param dataSource
+   */
   public Environment(String id, TransactionFactory transactionFactory, DataSource dataSource) {
     if (id == null) {
       throw new IllegalArgumentException("Parameter 'id' must not be null");
@@ -42,6 +58,9 @@ public final class Environment {
     this.dataSource = dataSource;
   }
 
+  /**
+   * 类似构造模式的构建器
+   */
   public static class Builder {
       private String id;
       private TransactionFactory transactionFactory;
@@ -50,6 +69,8 @@ public final class Environment {
     public Builder(String id) {
       this.id = id;
     }
+
+    //############################## 构建过程方法 ###########################################################
 
     public Builder transactionFactory(TransactionFactory transactionFactory) {
       this.transactionFactory = transactionFactory;
@@ -65,6 +86,10 @@ public final class Environment {
       return this.id;
     }
 
+    /**
+     * 构建方法
+     * @return
+     */
     public Environment build() {
       return new Environment(this.id, this.transactionFactory, this.dataSource);
     }

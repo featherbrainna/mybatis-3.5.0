@@ -15,11 +15,6 @@
  */
 package org.apache.ibatis.builder.annotation;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.ibatis.builder.BuilderException;
 import org.apache.ibatis.builder.SqlSourceBuilder;
 import org.apache.ibatis.mapping.BoundSql;
@@ -28,7 +23,13 @@ import org.apache.ibatis.parsing.PropertyParser;
 import org.apache.ibatis.reflection.ParamNameResolver;
 import org.apache.ibatis.session.Configuration;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
+ * 实现了SqlSource接口。由 MapperAnnotationBuilder 调用，解析 @XXXProvider 注解为 SqlSource 对象。
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */

@@ -21,7 +21,7 @@ import org.apache.ibatis.mapping.StatementType;
 import java.lang.annotation.*;
 
 /**
- * 操作可选项
+ * 操作可选项，类似于 SELECT|INSERT|UPDATE|DELETE 节点的属性设置
  * @author Clinton Begin
  */
 @Documented

@@ -38,12 +38,30 @@ public class XMLLanguageDriver implements LanguageDriver {
     return new DefaultParameterHandler(mappedStatement, parameterObject, boundSql);
   }
 
+  /**
+   * 依据 script 节点创建 SqlSource 对象。底层依赖 XMLScriptBuilder 对象实现
+   * 由 XMLStatementBuilder 调用
+   * @param configuration The MyBatis configuration
+   * @param script XNode parsed from a XML file
+   * @param parameterType input parameter type got from a mapper method or specified in the parameterType xml attribute. Can be null.
+   * @return
+   */
   @Override
   public SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType) {
+    //1.创建 XMLScriptBuilder 对象
     XMLScriptBuilder builder = new XMLScriptBuilder(configuration, script, parameterType);
+    //2.解析创建 SqlSource 对象
     return builder.parseScriptNode();
   }
 
+  /**
+   * 依据 script 字符串创建 SqlSource 对象。
+   * 由 MapperAnnotationBuilder 调用
+   * @param configuration The MyBatis configuration
+   * @param script The content of the annotation
+   * @param parameterType input parameter type got from a mapper method or specified in the parameterType xml attribute. Can be null.
+   * @return
+   */
   @Override
   public SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType) {
     // issue #3

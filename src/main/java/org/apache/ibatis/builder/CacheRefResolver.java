@@ -18,10 +18,14 @@ package org.apache.ibatis.builder;
 import org.apache.ibatis.cache.Cache;
 
 /**
+ * Cache 指向解析器
  * @author Clinton Begin
  */
 public class CacheRefResolver {
   private final MapperBuilderAssistant assistant;
+  /**
+   * Cache 指向的命名空间，即cache-ref节点得 namespace属性
+   */
   private final String cacheRefNamespace;
 
   public CacheRefResolver(MapperBuilderAssistant assistant, String cacheRefNamespace) {
@@ -29,6 +33,11 @@ public class CacheRefResolver {
     this.cacheRefNamespace = cacheRefNamespace;
   }
 
+  /**
+   * 解析指向的 cache-ref,底层使用 {@link MapperBuilderAssistant#useCacheRef(String)} 实现解析
+   * ，而更底层则通过 configuration 缓存的 caches自动实现解析对应namespace的缓存对象
+   * @return
+   */
   public Cache resolveCacheRef() {
     return assistant.useCacheRef(cacheRefNamespace);
   }

@@ -15,23 +15,13 @@
  */
 package org.apache.ibatis.session;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.function.BiFunction;
-
 import org.apache.ibatis.binding.MapperRegistry;
 import org.apache.ibatis.builder.CacheRefResolver;
 import org.apache.ibatis.builder.IncompleteElementException;
 import org.apache.ibatis.builder.ResultMapResolver;
+import org.apache.ibatis.builder.annotation.MapperAnnotationBuilder;
 import org.apache.ibatis.builder.annotation.MethodResolver;
+import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.builder.xml.XMLStatementBuilder;
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.decorators.FifoCache;
@@ -42,11 +32,7 @@ import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.datasource.jndi.JndiDataSourceFactory;
 import org.apache.ibatis.datasource.pooled.PooledDataSourceFactory;
 import org.apache.ibatis.datasource.unpooled.UnpooledDataSourceFactory;
-import org.apache.ibatis.executor.BatchExecutor;
-import org.apache.ibatis.executor.CachingExecutor;
-import org.apache.ibatis.executor.Executor;
-import org.apache.ibatis.executor.ReuseExecutor;
-import org.apache.ibatis.executor.SimpleExecutor;
+import org.apache.ibatis.executor.*;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.loader.ProxyFactory;
 import org.apache.ibatis.executor.loader.cglib.CglibProxyFactory;
@@ -66,12 +52,7 @@ import org.apache.ibatis.logging.log4j2.Log4j2Impl;
 import org.apache.ibatis.logging.nologging.NoLoggingImpl;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
 import org.apache.ibatis.logging.stdout.StdOutImpl;
-import org.apache.ibatis.mapping.BoundSql;
-import org.apache.ibatis.mapping.Environment;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMap;
-import org.apache.ibatis.mapping.ResultMap;
-import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.plugin.InterceptorChain;
@@ -93,6 +74,9 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
+
+import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * @author Clinton Begin
@@ -142,29 +126,83 @@ public class Configuration {
    */
   protected Class<?> configurationFactory;
 
+  /**
+   * MapperRegistry 对象，注册 Mapper 接口
+   */
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+  /**
+   * LanguageDriver注册对象
+   */
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
+  /**
+   * MappedStatement 对象映射
+   * key:MappedStatement 对象的完整id
+   * value:MappedStatement 对象
+   */
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+  /**
+   * 命名空间对应的Cache对象映射
+   * key:mapper.xml指定的namespace
+   * value:mapper.xml下的cache节点指定的Cache对象
+   * 【不包含间接映射的cache对象，即cache-ref指向的cache对象不记录】
+   */
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
+  /**
+   * ResultMap存储映射
+   * key:ResultMap的id,即 命名空间.id属性
+   * value:ResultMap对象
+   */
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
+  /**
+   * KeyGenerator映射
+   * key:namespace.SQL节点id!selectKey
+   * value:KeyGenerator对象
+   */
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
+  /**
+   * 已加载 mapper.xml 资源集合
+   * 元素为全类名。包括：（添加顺序如下）
+   * 1.和 org/mybatis/builder/AuthorMapper.xml ：解析完Mapper.xml后添加，即{@link XMLMapperBuilder#parse()}中添加
+   * 2.和 namespace:org.mybatis.builder.AuthorMapper ：解析完Mapper接口和映射文件绑定后添加，即@link XMLMapperBuilder#bindMapperForNamespace()中添加
+   * 3.org.mybatis.builder.AuthorMapper ：解析完Mapper接口后添加 ，即{@link MapperAnnotationBuilder#parse()}中添加
+   */
   protected final Set<String> loadedResources = new HashSet<>();
+  /**
+   * sql节点映射
+   * key:sql节点的完整id,namespace+id属性
+   * value:sql节点对象
+   */
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
+  /**
+   * 未完成的 XMLStatementBuilder 集合。解析 Mapper.xml 的 SQL 节点时未完成
+   */
   protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
+  /**
+   * 未完成的 CacheRefResolver 集合，使用namespace区分。解析 Mapper.xml 的 cacheRef 节点时未完成
+   */
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
+  /**
+   * 未完成的 ResultMapResolver 集合。解析 Mapper.xml 的 ResultMap 节点时未完成
+   */
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
+  /**
+   * 未完成的 MethodResolver 集合。解析Mapper接口时未完成
+   */
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
 
   /*
+   * Cache 指向的映射
+   * key:当前 namespace
+   * value:指向的 namespace缓存
    * A map holds cache-ref relationship. The key is the namespace that
    * references a cache bound to another namespace and the value is the
    * namespace which the actual cache is bound to.
@@ -304,10 +342,19 @@ public class Configuration {
     this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
   }
 
+  /**
+   * 标记该 Mapper 已经加载过
+   * @param resource
+   */
   public void addLoadedResource(String resource) {
     loadedResources.add(resource);
   }
 
+  /**
+   * 判断当前 Mapper 是否已经加载过
+   * @param resource
+   * @return
+   */
   public boolean isResourceLoaded(String resource) {
     return loadedResources.contains(resource);
   }
@@ -619,6 +666,11 @@ public class Configuration {
     return caches.values();
   }
 
+  /**
+   * 获得 Cache 对象
+   * @param id
+   * @return
+   */
   public Cache getCache(String id) {
     return caches.get(id);
   }
@@ -627,9 +679,17 @@ public class Configuration {
     return caches.containsKey(id);
   }
 
+  /**
+   * 存储 ResultMap 对象，添加到 resultMaps 属性集合中，
+   * 并最终调整 ResultMap 的 hasNestedResultMaps 属性值
+   * @param rm
+   */
   public void addResultMap(ResultMap rm) {
+    //1.添加到 resultMaps 中
     resultMaps.put(rm.getId(), rm);
+    //2.若传入的 ResultMap 不存在内嵌 ResultMap 并且有 Discriminator ，则依据Discriminator判断是否需要强制标记为有内嵌的 ResultMap
     checkLocallyForDiscriminatedNestedResultMaps(rm);
+    //3.遍历全局的 ResultMap 集合，若其拥有 Discriminator 对象，则判断是否强制标记为有内嵌的 ResultMap
     checkGloballyForDiscriminatedNestedResultMaps(rm);
   }
 
@@ -739,6 +799,7 @@ public class Configuration {
   }
 
   public void addMappers(String packageName) {
+    //扫描该包下所有的 Mapper 接口，并添加到 mapperRegistry 中
     mapperRegistry.addMappers(packageName);
   }
 
@@ -837,15 +898,26 @@ public class Configuration {
     return lastPeriod > 0 ? statementId.substring(0, lastPeriod) : null;
   }
 
+  /**
+   * 如果传入的 ResultMap 有内嵌的 ResultMap，
+   * 则全局处理 resultMaps 中的 ResultMap。
+   * @param rm
+   */
   // Slow but a one time cost. A better solution is welcome.
   protected void checkGloballyForDiscriminatedNestedResultMaps(ResultMap rm) {
+    //1.如果传入的 ResultMap 有内嵌的 ResultMap
     if (rm.hasNestedResultMaps()) {
+      //2.遍历全局的 resultMaps 集合
       for (Map.Entry<String, ResultMap> entry : resultMaps.entrySet()) {
+        //获取值 ResultMap 对象
         Object value = entry.getValue();
         if (value instanceof ResultMap) {
           ResultMap entryResultMap = (ResultMap) value;
+          //3.如果全局的 ResultMap 不存在内嵌的 ResultMap 并且有 Discriminator 节点
           if (!entryResultMap.hasNestedResultMaps() && entryResultMap.getDiscriminator() != null) {
+            //3.1获取 Discriminator 依赖的 ResultMap 集合
             Collection<String> discriminatedResultMapNames = entryResultMap.getDiscriminator().getDiscriminatorMap().values();
+            //3.2如果 ResultMap 集合包含传入的 ResultMap，则标记 entryResultMap 的 hasNestedResultMaps 属性为true
             if (discriminatedResultMapNames.contains(rm.getId())) {
               entryResultMap.forceNestedResultMaps();
             }
@@ -855,14 +927,24 @@ public class Configuration {
     }
   }
 
+  /**
+   * 若传入的 ResultMap 不存在内嵌的 ResultMap 并且有 Discriminator 节点，
+   * 则依据 Discriminator 引用的 ResultMap 是否有内嵌的 ResultMap 来设置传入的 ResultMap 的 hasNestedResultMaps 属性
+   * @param rm
+   */
   // Slow but a one time cost. A better solution is welcome.
   protected void checkLocallyForDiscriminatedNestedResultMaps(ResultMap rm) {
+    //1.如果传入的 ResultMap 对象没有内嵌的 ResultMap 且有 discriminator 节点
     if (!rm.hasNestedResultMaps() && rm.getDiscriminator() != null) {
+      //2.遍历传入的 ResultMap 的 Discriminator 的 DiscriminatorMap 映射集合
       for (Map.Entry<String, String> entry : rm.getDiscriminator().getDiscriminatorMap().entrySet()) {
+        //获取鉴别器依赖的 ResultMap 名字
         String discriminatedResultMapName = entry.getValue();
+        //3.如果依赖的 ResultMap存在嵌套的 ResultMap，则标记传入的 ResultMap 存在内嵌 ResultMap
         if (hasResultMap(discriminatedResultMapName)) {
           ResultMap discriminatedResultMap = resultMaps.get(discriminatedResultMapName);
           if (discriminatedResultMap.hasNestedResultMaps()) {
+            //标记设置ResultMap
             rm.forceNestedResultMaps();
             break;
           }

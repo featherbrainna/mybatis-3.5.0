@@ -15,10 +15,9 @@
  */
 package org.apache.ibatis.mapping;
 
+import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Properties;
-
-import javax.sql.DataSource;
 
 /**
  * Should return an id to identify the type of this database.
@@ -29,7 +28,17 @@ import javax.sql.DataSource;
  */
 public interface DatabaseIdProvider {
 
+  /**
+   * 设置属性
+   * @param p mybatis-config.xml读取的属性
+   */
   void setProperties(Properties p);
 
+  /**
+   * 获得数据库标识
+   * @param dataSource 数据源
+   * @return 数据库标识字符串
+   * @throws SQLException 异常
+   */
   String getDatabaseId(DataSource dataSource) throws SQLException;
 }
