@@ -26,6 +26,7 @@ import java.util.Locale;
 
 /**
  * Mybatis自定义EntityResolver类。用于加载本地mybatis-3-config.dtd和mybatis-3-mapper.dtd文件
+ * 由 XPathParser 对象构造时调用
  * Offline entity resolver for the MyBatis DTDs
  *
  * @author Clinton Begin
