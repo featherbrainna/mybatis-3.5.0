@@ -15,15 +15,15 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import ognl.Ognl;
+import ognl.OgnlException;
+import org.apache.ibatis.builder.BuilderException;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import ognl.Ognl;
-import ognl.OgnlException;
-
-import org.apache.ibatis.builder.BuilderException;
-
 /**
+ * OGNL 缓存类
  * Caches OGNL parsed expressions.
  *
  * @author Eduardo Macarron
@@ -32,27 +32,59 @@ import org.apache.ibatis.builder.BuilderException;
  */
 public final class OgnlCache {
 
+  /**
+   * OgnlMemberAccess 单例对象
+   */
   private static final OgnlMemberAccess MEMBER_ACCESS = new OgnlMemberAccess();
+  /**
+   * OgnlClassResolver 单例对象
+   */
   private static final OgnlClassResolver CLASS_RESOLVER = new OgnlClassResolver();
+  /**
+   * OGNL表达式的缓存的映射 单例对象
+   * key:OGNL表达式
+   * value:解析的表达式对象 {@link #parseExpression(String)}
+   */
   private static final Map<String, Object> expressionCache = new ConcurrentHashMap<>();
 
+  /**
+   * 私有化构造器，静态工具方法
+   */
   private OgnlCache() {
     // Prevent Instantiation of Static Class
   }
 
+  /**
+   * 根据 root 和 ONGL表达式 获取对应的结果
+   * @param expression ONGL表达式
+   * @param root root对象
+   * @return Object类型的值
+   */
   public static Object getValue(String expression, Object root) {
     try {
+      //1.创建 OGNL Context 对象
       Map context = Ognl.createDefaultContext(root, MEMBER_ACCESS, CLASS_RESOLVER, null);
+      //2.解析表达式
+      //3.获得表达式对应的值
       return Ognl.getValue(parseExpression(expression), context, root);
     } catch (OgnlException e) {
       throw new BuilderException("Error evaluating expression '" + expression + "'. Cause: " + e, e);
     }
   }
 
+  /**
+   * 解析 ONGL表达式
+   * @param expression ONGL表达式
+   * @return 解析结果
+   * @throws OgnlException
+   */
   private static Object parseExpression(String expression) throws OgnlException {
+    //1.查找缓存
     Object node = expressionCache.get(expression);
     if (node == null) {
+      //2.解析表达式
       node = Ognl.parseExpression(expression);
+      //3.缓存表达式解析结果
       expressionCache.put(expression, node);
     }
     return node;

@@ -16,11 +16,21 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * <if /> 标签的 SqlNode 实现类（树枝节点）
  * @author Clinton Begin
  */
 public class IfSqlNode implements SqlNode {
+  /**
+   * OGNL 表达式计算器对象。用于解析 if 节点的 test 表达式的值
+   */
   private final ExpressionEvaluator evaluator;
+  /**
+   * 记录 if 节点中的 test 表达式
+   */
   private final String test;
+  /**
+   * 内嵌的 SqlNode 节点，记录 if 节点的子节点
+   */
   private final SqlNode contents;
 
   public IfSqlNode(SqlNode contents, String test) {
@@ -31,7 +41,9 @@ public class IfSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    //1.检测 test 表达式是否符合条件
     if (evaluator.evaluateBoolean(test, context.getBindings())) {
+      //2.test表达式为true，则执行子节点的apply（）方法
       contents.apply(context);
       return true;
     }

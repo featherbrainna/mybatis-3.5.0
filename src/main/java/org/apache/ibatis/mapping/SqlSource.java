@@ -24,7 +24,8 @@ package org.apache.ibatis.mapping;
 public interface SqlSource {
 
   /**
-   * 根据映射文件或注解描述的SQL语句，以及传入的参数，返回可执行的 SQL
+   * 根据映射文件或注解描述的SQL语句，以及传入的参数，返回可执行的 BoundSql 对象
+   * BoundSql其中封装了包含 "?" 占位符的 SQL 语句，以及绑定的实参
    * @param parameterObject
    * @return
    */

@@ -23,7 +23,10 @@ import org.apache.ibatis.type.SimpleTypeRegistry;
 import java.util.regex.Pattern;
 
 /**
- * 文本sql动态sql节点，封装纯文本数据。SqlNode 的实现类。
+ * 包含“$｛｝”占位符的动态 SQL 节点。文本sql动态sql节点，封装纯文本数据。（叶子节点）
+ *
+ * 相比 StaticTextSqlNode 的实现来说，TextSqlNode 不确定是否为静态文本，
+ * 所以提供 #isDynamic() 方法，进行判断是否为动态文本
  * @author Clinton Begin
  */
 public class TextSqlNode implements SqlNode {
@@ -31,6 +34,9 @@ public class TextSqlNode implements SqlNode {
    * 带 ${} 属性的动态sql语句数据
    */
   private final String text;
+  /**
+   * 目前该属性只在单元测试中使用，暂时无视
+   */
   private final Pattern injectionFilter;
 
   public TextSqlNode(String text) {
@@ -59,11 +65,21 @@ public class TextSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    //1.创建 BindingTokenParser 对象（用于解析处理${XXX}内容）
+    //2.创建 GenericTokenParser 对象（用于找到占位符并通过传入的BindingTokenParser解析）
     GenericTokenParser parser = createParser(new BindingTokenParser(context, injectionFilter));
+    //3.执行解析
+    //4.将解析后的结果，添加到 DynamicContext.sqlBuilder 中
     context.appendSql(parser.parse(text));
     return true;
   }
 
+  /**
+   * 创建 GenericTokenParser 对象
+   * 通过这个方法，只要存在 ${xxx} 对，就认为是动态文本
+   * @param handler
+   * @return
+   */
   private GenericTokenParser createParser(TokenHandler handler) {
     return new GenericTokenParser("${", "}", handler);
   }
@@ -80,15 +96,22 @@ public class TextSqlNode implements SqlNode {
 
     @Override
     public String handleToken(String content) {
+      //初始化 value 属性到 context 中
+      //1.获取参数
       Object parameter = context.getBindings().get("_parameter");
+      //2.参数为 null，则放入 value,null 映射到context
       if (parameter == null) {
         context.getBindings().put("value", null);
       } else if (SimpleTypeRegistry.isSimpleType(parameter.getClass())) {
+        //2.参数为简单类型，则放入 value,parameter 映射到context
         context.getBindings().put("value", parameter);
       }
+      //3.使用 OGNL 表达式，获取对应的值(一般content为value)
       Object value = OgnlCache.getValue(content, context.getBindings());
       String srtValue = value == null ? "" : String.valueOf(value); // issue #274 return "" instead of "null"
+      //检测合法性
       checkInjection(srtValue);
+      //4.返回该值
       return srtValue;
     }
 
@@ -101,6 +124,9 @@ public class TextSqlNode implements SqlNode {
 
   private static class DynamicCheckerTokenParser implements TokenHandler {
 
+    /**
+     * 是否为动态文本
+     */
     private boolean isDynamic;
 
     public DynamicCheckerTokenParser() {
@@ -113,6 +139,7 @@ public class TextSqlNode implements SqlNode {
 
     @Override
     public String handleToken(String content) {
+      //当检测到 token ,标记为动态文本
       this.isDynamic = true;
       return null;
     }

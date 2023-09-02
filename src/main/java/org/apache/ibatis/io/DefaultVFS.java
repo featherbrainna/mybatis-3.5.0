@@ -81,7 +81,7 @@ public class DefaultVFS extends VFS {
         //3.url不是jar包
         List<String> children = new ArrayList<>();
         try {
-          // TODO 不理解url已经不是jar包了，为什么还要判断isJar(url)
+          // TODO ???不理解url已经不是jar包了，为什么还要判断isJar(url)
           //3.1url不是jar包，但是jar流。在有些情况下 URL 引用的资源实际上并不是一个 jar，但是打开一个URL的连接返回的流对象是一个JAR的流
           if (isJar(url)) {
             // Some versions of JBoss VFS might give a JAR stream even if the resource

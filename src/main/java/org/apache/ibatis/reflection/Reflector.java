@@ -505,7 +505,7 @@ public class Reflector {
   }
 
   /**
-   * 判断是否可以修改可访问性。有权限返回true，无权限返回false
+   * 判断是否可以修改可访问性（是否可以反射操作）。有权限返回true，无权限返回false
    * Checks whether can control member accessible.
    *
    * @return If can control member accessible, it return {@literal true}

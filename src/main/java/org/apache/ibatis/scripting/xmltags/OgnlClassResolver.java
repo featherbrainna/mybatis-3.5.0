@@ -19,6 +19,7 @@ import ognl.DefaultClassResolver;
 import org.apache.ibatis.io.Resources;
 
 /**
+ * 继承 ognl.DefaultClassResolver 类，OGNL 类解析器实现类
  * Custom ognl {@code ClassResolver} which behaves same like ognl's
  * {@code DefaultClassResolver}. But uses the {@code Resources}
  * utility class to find the target class instead of {@code Class#forName(String)}.
@@ -29,6 +30,12 @@ import org.apache.ibatis.io.Resources;
  */
 public class OgnlClassResolver extends DefaultClassResolver {
 
+  /**
+   * 加载指定 全类名 的class对象
+   * @param className
+   * @return
+   * @throws ClassNotFoundException
+   */
   @Override
   protected Class toClassForName(String className) throws ClassNotFoundException {
     return Resources.classForName(className);

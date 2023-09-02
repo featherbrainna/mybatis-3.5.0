@@ -15,10 +15,17 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import org.apache.ibatis.parsing.XNode;
+
 /**
+ * 静态文本的 SqlNode 实现类（叶子节点）
+ * 由 {@link XMLScriptBuilder#parseDynamicTags(XNode)} 调用
  * @author Clinton Begin
  */
 public class StaticTextSqlNode implements SqlNode {
+  /**
+   * 静态文本
+   */
   private final String text;
 
   public StaticTextSqlNode(String text) {
@@ -27,6 +34,7 @@ public class StaticTextSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    //直接拼接到 context 的 sqlBuilder 中
     context.appendSql(text);
     return true;
   }
