@@ -27,7 +27,9 @@ import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 
 /**
- * 二级缓存。用于预先缓存到二级缓存，当提交事务时放置到一级缓存
+ * 二级缓存的代理对象
+ * 在事务未提交时，entriesToAddOnCommit 属性，会暂存当前事务新产生的缓存 KV 对。
+ * 在事务提交时，entriesToAddOnCommit 属性，会同步到二级缓存 delegate 中。
  * The 2nd level cache transactional buffer.
  *
  * This class holds all cache entries that are to be added to the 2nd level cache during a Session.
@@ -43,19 +45,22 @@ public class TransactionalCache implements Cache {
   private static final Log log = LogFactory.getLog(TransactionalCache.class);
 
   /**
-   * 底层缓存对象
+   * 底层封装的 二级缓存对象
    */
   private final Cache delegate;
   /**
-   * 标志是否提交事务时清理，默认初始化为false
+   * 提交时清空二级缓存
+   *
+   * 默认初始化为false
+   * 当为true时，则表示二级缓存不可用不可查询，提交时会将底层二级缓存清空
    */
   private boolean clearOnCommit;
   /**
-   * 二级缓存，在提交事务时缓存到一级缓存
+   * 待提交的临时缓存。在提交事务时缓存到二级缓存（防止脏读，即读未提交）
    */
   private final Map<Object, Object> entriesToAddOnCommit;
   /**
-   * 一级缓存缺失的key
+   * 记录缓存未命中的CacheKey对象（防止BlockingCache底层二级缓存死锁）
    */
   private final Set<Object> entriesMissedInCache;
 
@@ -77,23 +82,26 @@ public class TransactionalCache implements Cache {
   }
 
   /**
-   * 从一级缓存获取缓存
+   * 首先查询底层的二级缓存delegate，并将未命中的key记录到 entriesMissedlnCache 中
+   * 查询未提交的结果暂存的 entriesToAddOnCommit 映射集合！！！
    * @param key The key
    * @return
    */
   @Override
   public Object getObject(Object key) {
     // issue #116
-    //1.获取一级缓存值
+    //1.从 delegaet 获取二级缓存key对应的缓存值（代理对象为BlockingCache时会加锁，导致二级缓存不可用阻塞）
     Object object = delegate.getObject(key);
-    //2.缓存值为null时，将未缓存的键记录到entriesMissedInCache集合
+    //2.二级缓存未查找到，则将未缓存的key记录到entriesMissedInCache集合
     if (object == null) {
       entriesMissedInCache.add(key);
     }
     // issue #146
+    //3.如果对象 clearOnCommit 属性为 true，表示二级缓存不可用返回null
     if (clearOnCommit) {
       return null;
     } else {
+      //3.如果对象 clearOnCommit 属性为 false，直接返回
       return object;
     }
   }
@@ -104,43 +112,54 @@ public class TransactionalCache implements Cache {
   }
 
   /**
-   * 添加到二级缓存
+   * 添加到二级缓存的临时缓存
    * @param key Can be any object but usually it is a {@link CacheKey}
    * @param object
    */
   @Override
   public void putObject(Object key, Object object) {
-    //添加缓存到entriesToAddOnCommit映射集合中即二级缓存中
+    //将缓存项暂存在 entriesToAddOnCommit 映射集合中
     entriesToAddOnCommit.put(key, object);
   }
 
+  /**
+   * 不支持删除二级缓存元素
+   * @param key The key
+   * @return
+   */
   @Override
   public Object removeObject(Object key) {
     return null;
   }
 
   /**
-   * 清空一级缓存和二级缓存
+   * 清空二级缓存暂存缓存，且二级缓存不可查。
+   * 会清空 entriesToAddOnCommit 集合，并设置 clearOnCommit 为 true
+   * 该方法，不会清空 delegate 的缓存。真正的清空，在事务提交时。
    */
   @Override
   public void clear() {
-    //设置clearOnCommit为true，提交时再清空一级缓存
+    //1.设置clearOnCommit为true，提交时再清空二级缓存，二级缓存后序不可用
     clearOnCommit = true;
-    //清空二级缓存
+    //2.清空二级缓存的暂存缓存
     entriesToAddOnCommit.clear();
   }
 
+  //################################# 事务相关方法 ##################################################################
+
   /**
    * 提交事务
+   * 事务提交时，才将当前事务中查询时产生的缓存，同步到二级缓存中！！！
+   * 因为二级缓存是跨 Session 共享缓存，在事务尚未结束时，不能对二级缓存做任何修改
    */
   public void commit() {
-    //1.提交时清理一级缓存，若有清空动作
+    //1.如果 clearOnCommit 为 true ，则清空delegate二级缓存（提交时才真正清空二级缓存）
     if (clearOnCommit) {
       delegate.clear();
     }
-    //2.刷新一级缓存使用二级缓存
+    //2.将 entriesToAddOnCommit、entriesMissedInCache 集合中的数据保存到二级缓存（同步entriesMissedInCache解锁）
     flushPendingEntries();
-    //3.重置二级缓存
+    //3.重置 clearOnCommit 为 true，并清空 entriesToAddOnCommit、entriesMissedInCache 集合
     reset();
   }
 
@@ -148,39 +167,42 @@ public class TransactionalCache implements Cache {
    * 回滚事务
    */
   public void rollback() {
-    //1.回滚事务底层实现
+    //1.将 entriesMissedInCache 集合记录的缓存项从二级缓存中删除
     unlockMissedEntries();
-    //2.重置二级缓存
+    //2.重置TransactionalCache对象
     reset();
   }
 
   /**
-   * 重置二级缓存
+   * 重置 TransactionalCache 对象，但底层二级缓存对象不变动
    */
   private void reset() {
+    //1.重置 clearOnCommit 为 false
     clearOnCommit = false;
+    //2.清空 entriesToAddOnCommit、entriesMissedInCache 集合
     entriesToAddOnCommit.clear();
     entriesMissedInCache.clear();
   }
 
   /**
-   * 执行二级缓存的事务
+   * 将 entriesToAddOnCommit、entriesMissedInCache 同步到 delegate 中
    */
   private void flushPendingEntries() {
-    //1.将二级缓存的键值添加到一级缓存
+    //1.遍历 entriesToAddOnCommit 集合，将 二级缓存的暂存缓存 添加到 二级缓存
     for (Map.Entry<Object, Object> entry : entriesToAddOnCommit.entrySet()) {
       delegate.putObject(entry.getKey(), entry.getValue());
     }
-    //2.处理一级缓存缺失的缓存，若二级缓存也没有就添加null值
+    //2.遍历 entriesMissedInCache 集合，将 entriesToAddOnCommit 集合中不包含的缓存项添加到二级缓存
     for (Object entry : entriesMissedInCache) {
       if (!entriesToAddOnCommit.containsKey(entry)) {
+        //保证支持 BlockingCache解锁
         delegate.putObject(entry, null);
       }
     }
   }
 
   /**
-   * 回滚事务底层实现 TODO ???不理解
+   * 将 entriesMissedInCache 集合记录的缓存项从二级缓存中删除
    */
   private void unlockMissedEntries() {
     for (Object entry : entriesMissedInCache) {

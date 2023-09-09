@@ -15,28 +15,57 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.sql.ResultSet;
-
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.sql.ResultSet;
+
 /**
+ * 参数属性映射
+ * “＃｛｝”占位符中的参数属性
  * @author Clinton Begin
  */
 public class ParameterMapping {
 
   private Configuration configuration;
 
+  /**
+   * 传入进来的参数 name
+   */
   private String property;
+  /**
+   * 输入参数还是输出参数（OUT, INOUT是存储过程使用的情况）
+   */
   private ParameterMode mode;
+  /**
+   * 参数的 java 类型
+   */
   private Class<?> javaType = Object.class;
+  /**
+   * 参数的 jdbc 类型
+   */
   private JdbcType jdbcType;
+  /**
+   * 浮点参数的精度
+   */
   private Integer numericScale;
+  /**
+   * 参数对应的 TYpeHandler 对象
+   */
   private TypeHandler<?> typeHandler;
+  /**
+   * 貌似只在 ParameterMode 在 OUT、INOUT 是在存储过程中使用（存储过程使用的情况）
+   */
   private String resultMapId;
+  /**
+   * 貌似只在 ParameterMode 在 OUT、INOUT 是在存储过程中使用（存储过程使用的情况）
+   */
   private String jdbcTypeName;
+  /**
+   * 目前不支持该属性
+   */
   private String expression;
 
   private ParameterMapping() {

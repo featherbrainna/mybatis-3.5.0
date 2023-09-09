@@ -15,20 +15,30 @@
  */
 package org.apache.ibatis.builder;
 
-import java.util.List;
-
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
+import java.util.List;
+
 /**
+ * 静态的 SqlSource 实现类
  * @author Clinton Begin
  */
 public class StaticSqlSource implements SqlSource {
 
+  /**
+   * 静态的 SQL，sql语句带 "?" 占位符
+   */
   private final String sql;
+  /**
+   * ParameterMapping 集合
+   */
   private final List<ParameterMapping> parameterMappings;
+  /**
+   * mybatis全局配置对象
+   */
   private final Configuration configuration;
 
   public StaticSqlSource(Configuration configuration, String sql) {
@@ -41,8 +51,16 @@ public class StaticSqlSource implements SqlSource {
     this.configuration = configuration;
   }
 
+  /**
+   * 底层获取 BoundSql 的方法
+   * 由 {@link org.apache.ibatis.scripting.xmltags.DynamicSqlSource#getBoundSql(Object)} 调用
+   * 由 {@link org.apache.ibatis.scripting.defaults.RawSqlSource#getBoundSql(Object)} 调用
+   * @param parameterObject 实际SQl传入的参数
+   * @return
+   */
   @Override
   public BoundSql getBoundSql(Object parameterObject) {
+    // 创建 BoundSql 对象
     return new BoundSql(configuration, sql, parameterMappings, parameterObject);
   }
 

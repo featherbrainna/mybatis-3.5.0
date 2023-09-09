@@ -16,11 +16,18 @@
 package org.apache.ibatis.scripting.xmltags;
 
 /**
+ * <bind /> 标签的 SqlNode 实现类（叶子节点）
  * @author Frank D. Martinez [mnesarco]
  */
 public class VarDeclSqlNode implements SqlNode {
 
+  /**
+   * bind 节点的 name 属性
+   */
   private final String name;
+  /**
+   * bind 节点的 value 属性
+   */
   private final String expression;
 
   public VarDeclSqlNode(String var, String exp) {
@@ -30,7 +37,9 @@ public class VarDeclSqlNode implements SqlNode {
 
   @Override
   public boolean apply(DynamicContext context) {
+    //1.解析 OGNL 表达式获取值
     final Object value = OgnlCache.getValue(expression, context.getBindings());
+    //2.将 name 和 表达式的值 存入 DynamicContext.bindings 集合中
     context.bind(name, value);
     return true;
   }

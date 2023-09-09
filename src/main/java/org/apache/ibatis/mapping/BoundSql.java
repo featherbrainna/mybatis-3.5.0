@@ -15,15 +15,16 @@
  */
 package org.apache.ibatis.mapping;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
 import org.apache.ibatis.session.Configuration;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
+ * 一次可执行的 SQL 封装
  * An actual SQL String got from an {@link SqlSource} after having processed any dynamic content.
  * The SQL may have SQL placeholders "?" and an list (ordered) of an parameter mappings
  * with the additional information for each parameter (at least the property name of the input object to read
@@ -35,10 +36,25 @@ import org.apache.ibatis.session.Configuration;
  */
 public class BoundSql {
 
+  /**
+   * 记录SQL语句，该语句可能含有 "?" 占位符
+   */
   private final String sql;
+  /**
+   * SQL中的参数属性集合，ParameterMapping的集合
+   */
   private final List<ParameterMapping> parameterMappings;
+  /**
+   * 客户执行SQL时传入的实际参数
+   */
   private final Object parameterObject;
+  /**
+   * 空的 HashMap 集合，对于动态SQL之后会复制 DynamicContext.bindings 集合中的内容
+   */
   private final Map<String, Object> additionalParameters;
+  /**
+   * additionalParameters 集合对应的MetaObject对象
+   */
   private final MetaObject metaParameters;
 
   public BoundSql(Configuration configuration, String sql, List<ParameterMapping> parameterMappings, Object parameterObject) {

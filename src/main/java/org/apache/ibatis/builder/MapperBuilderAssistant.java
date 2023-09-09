@@ -620,6 +620,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
   /**
    * 依据 langClass 获取 LanguageDriver 对象
+   * 1.先注册2.后获取
    * @param langClass
    * @return
    */

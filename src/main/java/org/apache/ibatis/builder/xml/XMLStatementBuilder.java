@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
+ * MappedStatement 构建器。统领解析 mapper.xml 中的 select|insert|update|delete 节点
  * @author Clinton Begin
  */
 public class XMLStatementBuilder extends BaseBuilder {
@@ -39,7 +40,7 @@ public class XMLStatementBuilder extends BaseBuilder {
    */
   private final MapperBuilderAssistant builderAssistant;
   /**
-   * 当前 mapper.xml 中的节点，例如 select\insert\update\delete 节点
+   * 当前 mapper.xml 中的节点，例如 select|insert|update|delete 节点
    */
   private final XNode context;
   /**
@@ -129,6 +130,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     KeyGenerator keyGenerator;
     String keyStatementId = id + SelectKeyGenerator.SELECT_KEY_SUFFIX;
     keyStatementId = builderAssistant.applyCurrentNamespace(keyStatementId, true);
+    //SQL节点下存在 selectKey 节点
     if (configuration.hasKeyGenerator(keyStatementId)) {
       keyGenerator = configuration.getKeyGenerator(keyStatementId);
     } else {

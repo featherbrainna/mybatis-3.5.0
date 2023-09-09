@@ -100,6 +100,9 @@ public class Configuration {
   protected String logPrefix;
   protected Class <? extends Log> logImpl;
   protected Class <? extends VFS> vfsImpl;
+  /**
+   * {@link BaseExecutor} 本地缓存范围，默认为LocalCacheScope.SESSION会话级
+   */
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
@@ -244,6 +247,7 @@ public class Configuration {
     typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
     typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
+    // 注册到 languageRegistry 中
     languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
     languageRegistry.register(RawLanguageDriver.class);
   }
@@ -593,8 +597,17 @@ public class Configuration {
     return MetaObject.forObject(object, objectFactory, objectWrapperFactory, reflectorFactory);
   }
 
+  /**
+   * 创建 ParameterHandler 对象
+   * @param mappedStatement MappedStatement对象
+   * @param parameterObject 参数对象
+   * @param boundSql 对应的boundSql对象
+   * @return ParameterHandler对象
+   */
   public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+    //1.通过XMLLanguageDriver创建 DefaultParameterHandler 对象
     ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+    //2.应用插件
     parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     return parameterHandler;
   }
@@ -606,8 +619,13 @@ public class Configuration {
     return resultSetHandler;
   }
 
+  /**
+   * 创建 RoutingStatementHandler 对象，其中组合了 底层实际的StatementHandler 对象
+   */
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    //1.创建 RoutingStatementHandler 对象。通过它自动路由到适合的 StatementHandler 实现类
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+    //2.应用插件
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -616,21 +634,35 @@ public class Configuration {
     return newExecutor(transaction, defaultExecutorType);
   }
 
+  /**
+   * 创建指定 ExecutorType 的 Executor 对象
+   * @param transaction 事务对象
+   * @param executorType 执行器类型
+   * @return Executor对象
+   */
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+    //1.获取执行器类型
+    //首先执行器类型 executorType 为空时赋值 defaultExecutorType，再然后执行器类型 executorType 为空时赋值 ExecutorType.SIMPLE
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
+      //2.如果类型为 BATCH，则创建 BatchExecutor 对象
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
+      //2.如果类型为 REUSE，则创建 ReuseExecutor 对象
       executor = new ReuseExecutor(this, transaction);
     } else {
+      //2.如果类型为 其他，则创建 SimpleExecutor 对象
       executor = new SimpleExecutor(this, transaction);
     }
+    //3.如果在mybatis-config.xml开启了全局二级缓存，则包装以上缓存为 CachingExecutor 对象
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }
+    //4.应用插件
     executor = (Executor) interceptorChain.pluginAll(executor);
+    //5.返回执行器
     return executor;
   }
 

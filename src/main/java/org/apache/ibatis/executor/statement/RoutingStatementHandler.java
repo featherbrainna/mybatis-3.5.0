@@ -15,11 +15,6 @@
  */
 package org.apache.ibatis.executor.statement;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
@@ -29,13 +24,30 @@ import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+
 /**
+ * StatementHandler的代理选择对象
+ *
+ * 管理了 SimpleStatementHandler、PreparedStatementHandler、CallableStatementHandler 三种对象类型
+ * 实现 StatementHandler 接口，路由的 StatementHandler 对象，根据 Statement 类型，转发到对应的 StatementHandler 实现类中
  * @author Clinton Begin
  */
 public class RoutingStatementHandler implements StatementHandler {
 
+  /**
+   * StatementHandler被代理对象，底层对象
+   */
   private final StatementHandler delegate;
 
+  /**
+   * 构造器。
+   * 依据 MappedStatement.statementType 初始化 delegate 属性，指定被代理对象（底层对象）
+   * 依据不同的类型，创建对应的 StatementHandler 实现类
+   */
   public RoutingStatementHandler(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
 
     switch (ms.getStatementType()) {
@@ -53,6 +65,8 @@ public class RoutingStatementHandler implements StatementHandler {
     }
 
   }
+
+  //################################### 调用底层对象delegate实现 ############################################################
 
   @Override
   public Statement prepare(Connection connection, Integer transactionTimeout) throws SQLException {
