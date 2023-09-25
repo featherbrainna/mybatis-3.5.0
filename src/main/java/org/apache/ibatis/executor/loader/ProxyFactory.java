@@ -15,19 +15,35 @@
  */
 package org.apache.ibatis.executor.loader;
 
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.Configuration;
 
+import java.util.List;
+import java.util.Properties;
+
 /**
+ * 代理工厂接口，用于创建需要延迟加载属性的结果对象（默认使用CglibProxyFactory）
  * @author Eduardo Macarron
  */
 public interface ProxyFactory {
 
+  /**
+   * 根据配置初始化ProxyFactory对象。
+   * 设置属性，目前是空实现，可以暂时无视该方法
+   * @param properties 属性对象
+   */
   void setProperties(Properties properties);
 
+  /**
+   * 创建代理对象
+   * @param target 目标被代理对象
+   * @param lazyLoader ResultLoaderMap对象
+   * @param configuration 配置对象
+   * @param objectFactory 对象工厂
+   * @param constructorArgTypes 构造器参数类型集合
+   * @param constructorArgs 构造器参数值集合
+   * @return 代理对象
+   */
   Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs);
 
 }

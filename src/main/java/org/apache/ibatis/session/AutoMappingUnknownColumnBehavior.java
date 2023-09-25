@@ -69,6 +69,7 @@ public enum AutoMappingUnknownColumnBehavior {
   public abstract void doAction(MappedStatement mappedStatement, String columnName, String propertyName, Class<?> propertyType);
 
   /**
+   * 拼接信息字符串
    * build error message.
    */
   private static String buildMessage(MappedStatement mappedStatement, String columnName, String property, Class<?> propertyType) {
@@ -83,6 +84,9 @@ public enum AutoMappingUnknownColumnBehavior {
       .toString();
   }
 
+  /**
+   * 静态内部类单例日志对象
+   */
   private static class LogHolder {
     private static final Log log = LogFactory.getLog(AutoMappingUnknownColumnBehavior.class);
   }

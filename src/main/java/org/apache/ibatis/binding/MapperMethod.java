@@ -45,11 +45,11 @@ import java.util.*;
 public class MapperMethod {
 
   /**
-   * SqlCommand对象，记录了sql语句的名称和类型
+   * SqlCommand对象，记录了sql语句的名称和类型（mapper.xml相关）
    */
   private final SqlCommand command;
   /**
-   * MethodSignature对象，Mapper接口中对应方法的相关信息
+   * MethodSignature对象，Mapper接口中对应方法的相关信息（mapper接口相关）
    */
   private final MethodSignature method;
 
@@ -65,8 +65,10 @@ public class MapperMethod {
   }
 
   /**
-   * 执行sql,由代理对象的底层的handler调用 {@link MapperProxy#invoke(Object, Method, Object[])}
-   * 底层由SqlSession对象实现sql语句调用执行
+   * 执行sql,由Mapper接口的代理对象的底层的handler调用 {@link MapperProxy#invoke(Object, Method, Object[])} 本方法
+   * 底层路由给SqlSession对象实现sql语句调用执行
+   * 1.先根据 SQL 语句的类型路由
+   * 2.再根据 方法返回值类型 路由
    * @param sqlSession sqlSession对象
    * @param args sql参数
    * @return
@@ -76,43 +78,49 @@ public class MapperMethod {
     //1.根据 SQL 语句的类型调用 sqlSession 对应的方法
     switch (command.getType()) {
       case INSERT: {
-        //使用 paramNameResolver 处理参数值数组，获取参数名与参数值映射对象
+        //2.1使用 paramNameResolver 处理参数值数组，获取参数对象
     	Object param = method.convertArgsToSqlCommandParam(args);
-    	//调用 sqlSession.insert() 方法，rowCountResult() 方法会根据method属性中记录的方法返回值类型对结果进行转换
+    	//2.2执行 insert 操作
+    	//调用 sqlSession.insert() 方法执行写操作，rowCountResult() 方法会根据method属性中记录的方法返回值类型对结果进行转换
         result = rowCountResult(sqlSession.insert(command.getName(), param));
         break;
       }
       case UPDATE: {
-        //使用 paramNameResolver 处理参数值数组，获取参数名与参数值映射对象
+        //2.1使用 paramNameResolver 处理参数值数组，获取参数对象
         Object param = method.convertArgsToSqlCommandParam(args);
+        //2.2执行 update 操作
         //调用 sqlSession.update() 方法，rowCountResult() 方法会根据method属性中记录的方法返回值类型对结果进行转换
         result = rowCountResult(sqlSession.update(command.getName(), param));
         break;
       }
       case DELETE: {
-        //使用 paramNameResolver 处理参数值数组，获取参数名与参数值映射对象
+        //2.1使用 paramNameResolver 处理参数值数组，获取参数对象
         Object param = method.convertArgsToSqlCommandParam(args);
+        //2.2执行 delete 操作
         //调用 sqlSession.delete() 方法，rowCountResult() 方法会根据method属性中记录的方法返回值类型对结果进行转换
         result = rowCountResult(sqlSession.delete(command.getName(), param));
         break;
       }
       case SELECT:
-        //依据method方法属性的返回类型进行分别处理
-        //如果方法返回值类型为Void且有ResultHandler参数，委托executeWithResultHandler(sqlSession, args)方法
+        //2.1依据 method方法属性的返回类型 进行分别处理
+        //2.2如果方法返回值类型为Void且有ResultHandler参数，委托executeWithResultHandler(sqlSession, args)方法
         if (method.returnsVoid() && method.hasResultHandler()) {
           executeWithResultHandler(sqlSession, args);
           result = null;
         } else if (method.returnsMany()) {
+          //2.2如果方法返回值为 collection类型 或者 数组类型，调用executeForMany(sqlSession, args)执行查询
           result = executeForMany(sqlSession, args);
         } else if (method.returnsMap()) {
+          //2.2如果方法返回值为 Map类型，调用executeForMap(sqlSession, args)执行查询
           result = executeForMap(sqlSession, args);
         } else if (method.returnsCursor()) {
+          //2.2如果方法返回值类型为 Cursor 类型，调用executeForCursor(sqlSession, args)执行查询
           result = executeForCursor(sqlSession, args);
         } else {
-          //其他返回类型
-          //使用 paramNameResolver 处理参数值数组，获取参数名与参数值映射对象
+          //2.2如果方法返回值类型为其他返回类型
+          //2.3使用 paramNameResolver 处理参数值数组，获取参数对象
           Object param = method.convertArgsToSqlCommandParam(args);
-          //调用 sqlSession.selectOne() 方法
+          //2.4调用 sqlSession.selectOne() 方法
           result = sqlSession.selectOne(command.getName(), param);
           //返回值类型为Optional，构造Optional对象
           if (method.returnsOptional() &&
@@ -129,11 +137,12 @@ public class MapperMethod {
         //其他sql语句类型，抛出异常
         throw new BindingException("Unknown execution method for: " + command.getName());
     }
+    //3.如果结果对象为空，且方法返回值为基本数据类型，且方法返回值类型不为void，则抛出异常
     if (result == null && method.getReturnType().isPrimitive() && !method.returnsVoid()) {
       throw new BindingException("Mapper method '" + command.getName()
           + " attempted to return null from a method with a primitive return type (" + method.getReturnType() + ").");
     }
-    //返回result
+    //4.返回result
     return result;
   }
 
@@ -164,7 +173,7 @@ public class MapperMethod {
   }
 
   /**
-   * select sql的 void方法返回值ResultHandler处理结果的 执行sql的方法
+   * void方法返回值，且ResultHandler处理结果。路由给sqlSesson的select方法执行读操作
    * @param sqlSession sqlSession对象
    * @param args 方法参数
    */
@@ -178,11 +187,14 @@ public class MapperMethod {
           + " needs either a @ResultMap annotation, a @ResultType annotation,"
           + " or a resultType attribute in XML so a ResultHandler can be used as a parameter.");
     }
-    //3.获取参数名参数值映射
+    //3.从参数数组获取参数对象
     Object param = method.convertArgsToSqlCommandParam(args);
     //4.底层调用 sqlSession.select 方法执行sql
     if (method.hasRowBounds()) {
+      //4.1从method和 参数数组 获取 RowBounds 对象（来源于参数数组）
       RowBounds rowBounds = method.extractRowBounds(args);
+      //4.2从method和 参数数组 获取 ResultHandler 对象（来源于参数数组）
+      //4.3调用 sqlSession.select 方法执行sql
       sqlSession.select(command.getName(), param, rowBounds, method.extractResultHandler(args));
     } else {
       sqlSession.select(command.getName(), param, method.extractResultHandler(args));
@@ -190,7 +202,7 @@ public class MapperMethod {
   }
 
   /**
-   * select sql的 集合返回值的 执行sql的方法
+   * 集合或数组返回值。路由给sqlSesson的selectList方法执行读操作
    * @param sqlSession sqlSession对象
    * @param args 方法参数
    * @param <E> 集合元素类型
@@ -198,7 +210,7 @@ public class MapperMethod {
    */
   private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
     List<E> result;
-    //1.获取参数名参数值映射
+    //1.从参数数组获取参数对象
     Object param = method.convertArgsToSqlCommandParam(args);
     //2.方法如果有 RowBounds 参数
     if (method.hasRowBounds()) {
@@ -211,26 +223,39 @@ public class MapperMethod {
       result = sqlSession.<E>selectList(command.getName(), param);
     }
     // issue #510 Collections & arrays support
-    //3.将结果转换为数组或Collection集合
+    //3.将结果转换为 数组 或 Collection集合
     if (!method.getReturnType().isAssignableFrom(result.getClass())) {
-      //3.1Collection集合转换成数组
+      //3.1将list集合对象转换成数组
       if (method.getReturnType().isArray()) {
         return convertToArray(result);
       } else {
-        //3.2list集合转换成指定Collection类型集合
+        //3.2将list集合对象转换成指定Collection类型集合
         return convertToDeclaredCollection(sqlSession.getConfiguration(), result);
       }
     }
+    //4.直接返回结果
     return result;
   }
 
+  /**
+   * 游标结果对象为返回值。路由给sqlSesson的selectCursor方法执行读操作
+   * @param sqlSession sqlSession对象
+   * @param args 方法参数
+   * @param <T> 结果类型
+   * @return 游标结果对象
+   */
   private <T> Cursor<T> executeForCursor(SqlSession sqlSession, Object[] args) {
     Cursor<T> result;
+    //1.从参数数组获取参数对象
     Object param = method.convertArgsToSqlCommandParam(args);
+    //2.如果方法签名中有 RowBounds 类型的参数
     if (method.hasRowBounds()) {
+      //2.1从方法签名和参数数组中获取 RowBounds对象
       RowBounds rowBounds = method.extractRowBounds(args);
+      //2.2调用 sqlSession.<T>selectCursor 执行查询
       result = sqlSession.<T>selectCursor(command.getName(), param, rowBounds);
     } else {
+      //2.如果方法签名中没有 RowBounds 类型的参数
       result = sqlSession.<T>selectCursor(command.getName(), param);
     }
     return result;
@@ -278,7 +303,7 @@ public class MapperMethod {
   }
 
   /**
-   * select sql的 Map返回值的 执行sql的方法
+   * Map返回值。路由给sqlSesson的selectMap方法执行读操作
    * @param sqlSession sqlSession对象
    * @param args 方法参数
    * @param <K> key
@@ -492,6 +517,7 @@ public class MapperMethod {
     }
 
     /**
+     * 将 参数数组 转换为 参数对象
      * 获得 SQL 通用参数映射，底层调用 {@link ParamNameResolver#getNamedParams(Object[])} 实现
      * @param args 方法参数
      * @return 参数名与参数值的映射

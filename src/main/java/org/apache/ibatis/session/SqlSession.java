@@ -15,15 +15,17 @@
  */
 package org.apache.ibatis.session;
 
+import org.apache.ibatis.cursor.Cursor;
+import org.apache.ibatis.executor.BatchResult;
+
 import java.io.Closeable;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.ibatis.cursor.Cursor;
-import org.apache.ibatis.executor.BatchResult;
-
 /**
+ * SQL Session 接口
+ * 大体和 Executor 接口是相似的。通过Executor实现底层逻辑。
  * The primary Java interface for working with MyBatis.
  * Through this interface you can execute commands, get mappers and manage transactions.
  *
@@ -31,52 +33,60 @@ import org.apache.ibatis.executor.BatchResult;
  */
 public interface SqlSession extends Closeable {
 
+  //#################### selectOne\selectList\selectMap\selectCursor\select ##########################################################
+
   /**
+   * 通过 指定的sql节点的编号 查询唯一的结果对象（对应一行记录）
    * Retrieve a single row mapped from the statement key
    * @param <T> the returned object type
-   * @param statement
-   * @return Mapped object
+   * @param statement 使用的查询SQL语句
+   * @return Mapped object 查询的结果对象
    */
   <T> T selectOne(String statement);
 
   /**
+   * 通过 指定的sql节点的编号、传入实参 查询唯一的结果对象（对应一行记录）
    * Retrieve a single row mapped from the statement key and parameter.
    * @param <T> the returned object type
-   * @param statement Unique identifier matching the statement to use.
-   * @param parameter A parameter object to pass to the statement.
+   * @param statement Unique identifier matching the statement to use.sql节点的编号
+   * @param parameter A parameter object to pass to the statement.用户传入的实参
    * @return Mapped object
    */
   <T> T selectOne(String statement, Object parameter);
 
   /**
+   * 通过 指定的sql节点的编号 查询结果对象集合（对应多行记录）
    * Retrieve a list of mapped objects from the statement key and parameter.
    * @param <E> the returned list element type
-   * @param statement Unique identifier matching the statement to use.
+   * @param statement Unique identifier matching the statement to use.sql节点的编号
    * @return List of mapped object
    */
   <E> List<E> selectList(String statement);
 
   /**
+   * 通过 指定的sql节点的编号、传入实参 查询结果对象集合（对应多行记录）
    * Retrieve a list of mapped objects from the statement key and parameter.
    * @param <E> the returned list element type
-   * @param statement Unique identifier matching the statement to use.
-   * @param parameter A parameter object to pass to the statement.
+   * @param statement Unique identifier matching the statement to use.sql节点的编号
+   * @param parameter A parameter object to pass to the statement.用户传入的实参
    * @return List of mapped object
    */
   <E> List<E> selectList(String statement, Object parameter);
 
   /**
+   * 通过 指定的sql节点的编号、传入实参、行限制 查询结果对象集合（对应多行记录）
    * Retrieve a list of mapped objects from the statement key and parameter,
    * within the specified row bounds.
    * @param <E> the returned list element type
-   * @param statement Unique identifier matching the statement to use.
-   * @param parameter A parameter object to pass to the statement.
-   * @param rowBounds  Bounds to limit object retrieval
+   * @param statement Unique identifier matching the statement to use.sql节点的编号
+   * @param parameter A parameter object to pass to the statement.用户传入的实参
+   * @param rowBounds  Bounds to limit object retrieval行限制
    * @return List of mapped object
    */
   <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds);
 
   /**
+   * 查询以Map对象返回
    * The selectMap is a special case in that it is designed to convert a list
    * of results into a Map based on one of the properties in the resulting
    * objects.
@@ -84,7 +94,7 @@ public interface SqlSession extends Closeable {
    * @param <K> the returned Map keys type
    * @param <V> the returned Map values type
    * @param statement Unique identifier matching the statement to use.
-   * @param mapKey The property to use as key for each value in the list.
+   * @param mapKey The property to use as key for each value in the list.指定哪一列作为Map的key
    * @return Map containing key pair data.
    */
   <K, V> Map<K, V> selectMap(String statement, String mapKey);
@@ -117,6 +127,7 @@ public interface SqlSession extends Closeable {
   <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds);
 
   /**
+   * 查询以游标对象返回
    * A Cursor offers the same results as a List, except it fetches data lazily using an Iterator.
    * @param <T> the returned cursor element type.
    * @param statement Unique identifier matching the statement to use.
@@ -144,6 +155,7 @@ public interface SqlSession extends Closeable {
   <T> Cursor<T> selectCursor(String statement, Object parameter, RowBounds rowBounds);
 
   /**
+   * 查询结果对象由此处指定的 ResultHandler 对象处理
    * Retrieve a single row mapped from the statement key and parameter
    * using a {@code ResultHandler}.
    * @param statement Unique identifier matching the statement to use.
@@ -170,6 +182,7 @@ public interface SqlSession extends Closeable {
   void select(String statement, Object parameter, RowBounds rowBounds, ResultHandler handler);
 
   /**
+   * 执行insert语句
    * Execute an insert statement.
    * @param statement Unique identifier matching the statement to execute.
    * @return int The number of rows affected by the insert.
@@ -187,6 +200,7 @@ public interface SqlSession extends Closeable {
   int insert(String statement, Object parameter);
 
   /**
+   * 执行update语句
    * Execute an update statement. The number of rows affected will be returned.
    * @param statement Unique identifier matching the statement to execute.
    * @return int The number of rows affected by the update.
@@ -202,6 +216,7 @@ public interface SqlSession extends Closeable {
   int update(String statement, Object parameter);
 
   /**
+   * 执行delete语句
    * Execute a delete statement. The number of rows affected will be returned.
    * @param statement Unique identifier matching the statement to execute.
    * @return int The number of rows affected by the delete.
@@ -216,7 +231,10 @@ public interface SqlSession extends Closeable {
    */
   int delete(String statement, Object parameter);
 
+  //#################################### 事务相关 ##########################################################
+
   /**
+   * 提交事务
    * Flushes batch statements and commits database connection.
    * Note that database connection will not be committed if no updates/deletes/inserts were called.
    * To force the commit call {@link SqlSession#commit(boolean)}
@@ -230,6 +248,7 @@ public interface SqlSession extends Closeable {
   void commit(boolean force);
 
   /**
+   * 回滚事务
    * Discards pending batch statements and rolls database connection back.
    * Note that database connection will not be rolled back if no updates/deletes/inserts were called.
    * To force the rollback call {@link SqlSession#rollback(boolean)}
@@ -244,6 +263,7 @@ public interface SqlSession extends Closeable {
   void rollback(boolean force);
 
   /**
+   * 将请求刷新到数据库
    * Flushes batch statements.
    * @return BatchResult list of updated records
    * @since 3.0.6
@@ -251,23 +271,29 @@ public interface SqlSession extends Closeable {
   List<BatchResult> flushStatements();
 
   /**
+   * 关闭当前session
    * Closes the session
    */
   @Override
   void close();
 
+  //###################################### 缓存与其它相关 #########################################################
+
   /**
+   * 清空缓存
    * Clears local session cache
    */
   void clearCache();
 
   /**
+   * 获取 Configuration 对象
    * Retrieves current configuration
    * @return Configuration
    */
   Configuration getConfiguration();
 
   /**
+   * 获取 type 对应的 Mapper 对象
    * Retrieves a mapper.
    * @param <T> the mapper type
    * @param type Mapper interface class
@@ -276,6 +302,7 @@ public interface SqlSession extends Closeable {
   <T> T getMapper(Class<T> type);
 
   /**
+   * 获取该 SqlSession 对应的数据库连接
    * Retrieves inner database connection
    * @return Connection
    */

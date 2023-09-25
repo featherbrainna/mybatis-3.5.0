@@ -18,6 +18,8 @@ package org.apache.ibatis.session;
 import java.sql.Connection;
 
 /**
+ * SqlSession 工厂接口
+ * 定义了 #openSession(...) 和 #getConfiguration() 两类方法
  * Creates an {@link SqlSession} out of a connection or a DataSource
  *
  * @author Clinton Begin

@@ -15,18 +15,22 @@
  */
 package org.apache.ibatis.executor.result;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
+ * 实现 ResultHandler 接口，默认的 ResultHandler 的实现类
  * @author Clinton Begin
  */
 public class DefaultResultHandler implements ResultHandler<Object> {
 
+  /**
+   * 结果对象集合
+   */
   private final List<Object> list;
 
   public DefaultResultHandler() {
@@ -40,6 +44,7 @@ public class DefaultResultHandler implements ResultHandler<Object> {
 
   @Override
   public void handleResult(ResultContext<? extends Object> context) {
+    //将当前结果对象，添加到结果对象集合 list 属性
     list.add(context.getResultObject());
   }
 

@@ -15,6 +15,10 @@
  */
 package org.apache.ibatis.session;
 
+import org.apache.ibatis.cursor.Cursor;
+import org.apache.ibatis.executor.BatchResult;
+import org.apache.ibatis.reflection.ExceptionUtil;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.lang.reflect.InvocationHandler;
@@ -25,28 +29,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.ibatis.cursor.Cursor;
-import org.apache.ibatis.executor.BatchResult;
-import org.apache.ibatis.reflection.ExceptionUtil;
-
 /**
+ * 实现 SqlSessionFactory、SqlSession 接口，SqlSession 管理器。
  * @author Larry Meadors
  */
 public class SqlSessionManager implements SqlSessionFactory, SqlSession {
 
+  /**
+   * 底层封装的SqlSessionFactory对象。构造器初始化
+   */
   private final SqlSessionFactory sqlSessionFactory;
+  /**
+   * SqlSession代理对象。构造器使用JDK动态代理初始化
+   */
   private final SqlSession sqlSessionProxy;
 
+  /**
+   * 线程变量，当前线程的SqlSession对象
+   */
   private final ThreadLocal<SqlSession> localSqlSession = new ThreadLocal<>();
 
+  /**
+   * 私有构造器。初始化属性sqlSessionFactory、sqlSessionProxy
+   */
   private SqlSessionManager(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
+    //创建SqlSession的代理对象
     this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
         SqlSessionFactory.class.getClassLoader(),
         new Class[]{SqlSession.class},
         new SqlSessionInterceptor());
   }
 
+  //############################## newInstance方法 ###################################################################
+
+  /**
+   * 底层调用 SqlSessionManager私有构造器 和 SqlSessionFactoryBuilder构建SqlSessionFactory 实现
+   * @param reader mybatis-config.xml文件的输入流
+   * @return
+   */
   public static SqlSessionManager newInstance(Reader reader) {
     return new SqlSessionManager(new SqlSessionFactoryBuilder().build(reader, null, null));
   }
@@ -75,6 +96,11 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     return new SqlSessionManager(sqlSessionFactory);
   }
 
+  //#################################### startManagedSession方法 ##############################################################
+
+  /**
+   * 发起一个可被管理的 SqlSession。即将生成的 SqlSession 设置到 ThreadLocal
+   */
   public void startManagedSession() {
     this.localSqlSession.set(openSession());
   }
@@ -107,9 +133,15 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     this.localSqlSession.set(openSession(execType, connection));
   }
 
+  /**
+   * 查看是否管理了 SqlSession。即ThreadLoacl有无保存 SqlSession
+   * @return
+   */
   public boolean isManagedSessionStarted() {
     return this.localSqlSession.get() != null;
   }
+
+  //#################################### SqlSessionFactory接口方法 ###############################################################
 
   @Override
   public SqlSession openSession() {
@@ -155,6 +187,8 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
   public Configuration getConfiguration() {
     return sqlSessionFactory.getConfiguration();
   }
+
+  //##################################### SqlSession接口方法 ############################################################
 
   @Override
   public <T> T selectOne(String statement) {
@@ -256,11 +290,21 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     return sqlSessionProxy.delete(statement, parameter);
   }
 
+  /**
+   * 从配置对象获取 Mapper 对象
+   * @param type Mapper interface class
+   * @param <T>
+   * @return
+   */
   @Override
   public <T> T getMapper(Class<T> type) {
     return getConfiguration().getMapper(type, this);
   }
 
+  /**
+   * 从当前线程的SqlSession获取数据库连接对象
+   * @return
+   */
   @Override
   public Connection getConnection() {
     final SqlSession sqlSession = localSqlSession.get();
@@ -337,27 +381,49 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     }
   }
 
+  /**
+   * 内部类，实现 InvocationHandler 接口，实现对 sqlSessionProxy 的调用的拦截
+   *
+   * 代理对象/增强逻辑只在读写数据库时启用，且被代理对象为外部类的 localSqlSession 属性存储的当前线程 sqlSession
+   */
   private class SqlSessionInterceptor implements InvocationHandler {
     public SqlSessionInterceptor() {
         // Prevent Synthetic Access
     }
 
+    /**
+     * 代理增强逻辑
+     * @param proxy 代理对象
+     * @param method 方法反射对象
+     * @param args 方法参数
+     * @return 方法结果
+     * @throws Throwable
+     */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      //1.从外部类的 localSqlSession 属性中获取 SqlSession 对象。即获取当前线程的  SqlSession 对象
       final SqlSession sqlSession = SqlSessionManager.this.localSqlSession.get();
+      //2.模式二：如果当前线程的 sqlSession 不为空
       if (sqlSession != null) {
         try {
+          //2.1调用被代理对象sqlSession的方法，完成数据库的读写
           return method.invoke(sqlSession, args);
         } catch (Throwable t) {
           throw ExceptionUtil.unwrapThrowable(t);
         }
       } else {
+        //2.模式一：如果当前线程的 sqlSession 为空
+        //2.1创建 SqlSession 对象
         try (SqlSession autoSqlSession = openSession()) {
           try {
+            //2.2调用创建的sqlSession的方法，完成数据库的读写
             final Object result = method.invoke(autoSqlSession, args);
+            //2.3提交事务
             autoSqlSession.commit();
+            //2.4返回方法结果
             return result;
           } catch (Throwable t) {
+            //出现异常，回滚事务
             autoSqlSession.rollback();
             throw ExceptionUtil.unwrapThrowable(t);
           }

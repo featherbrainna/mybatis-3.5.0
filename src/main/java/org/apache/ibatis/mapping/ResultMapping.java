@@ -101,6 +101,7 @@ public class ResultMapping {
 
   /**
    * ResultMapping 的构建器，类似构建者模式
+   * [注意]：build时会根据java类型和jdbc类型再次在TypeHandlerRegistry查找TypeHandler，来初始化TypeHandler
    */
   public static class Builder {
     /**

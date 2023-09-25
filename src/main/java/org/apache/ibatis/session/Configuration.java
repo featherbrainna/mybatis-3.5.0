@@ -88,6 +88,10 @@ public class Configuration {
   protected boolean safeRowBoundsEnabled;
   protected boolean safeResultHandlerEnabled = true;
   protected boolean mapUnderscoreToCamelCase;
+  /**
+   * 当开启时，任何方法的调用都会加载该对象的所有属性。
+   * 否则，每个属性会按需加载
+   */
   protected boolean aggressiveLazyLoading;
   protected boolean multipleResultSetsEnabled = true;
   protected boolean useGeneratedKeys;
@@ -105,6 +109,9 @@ public class Configuration {
    */
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
+  /**
+   * 指定哪个对象的方法名触发一次延迟加载
+   */
   protected Set<String> lazyLoadTriggerMethods = new HashSet<>(Arrays.asList("equals", "clone", "hashCode", "toString"));
   protected Integer defaultStatementTimeout;
   protected Integer defaultFetchSize;
@@ -812,9 +819,11 @@ public class Configuration {
   }
 
   public MappedStatement getMappedStatement(String id, boolean validateIncompleteStatements) {
+    //1.校验，保证所有 MappedStatement 已经构造完毕
     if (validateIncompleteStatements) {
       buildAllStatements();
     }
+    //2.获取 MappedStatement 对象
     return mappedStatements.get(id);
   }
 
@@ -863,17 +872,21 @@ public class Configuration {
   }
 
   /*
+   * 用来保证所有 MappedStatement 已经构造完毕
    * Parses all the unprocessed statement nodes in the cache. It is recommended
    * to call this method once all the mappers are added as it provides fail-fast
    * statement validation.
    */
   protected void buildAllStatements() {
+    //1.保证 incompleteResultMaps 被解析完
     parsePendingResultMaps();
+    //2.保证 incompleteCacheRefs 被解析完
     if (!incompleteCacheRefs.isEmpty()) {
       synchronized (incompleteCacheRefs) {
         incompleteCacheRefs.removeIf(x -> x.resolveCacheRef() != null);
       }
     }
+    //3.保证 incompleteStatements 被解析完
     if (!incompleteStatements.isEmpty()) {
       synchronized (incompleteStatements) {
         incompleteStatements.removeIf(x -> {
@@ -882,6 +895,7 @@ public class Configuration {
         });
       }
     }
+    //4.保证 incompleteMethods 被解析完
     if (!incompleteMethods.isEmpty()) {
       synchronized (incompleteMethods) {
         incompleteMethods.removeIf(x -> {
@@ -892,6 +906,9 @@ public class Configuration {
     }
   }
 
+  /**
+   * 保证 incompleteResultMaps 被解析完
+   */
   private void parsePendingResultMaps() {
     if (incompleteResultMaps.isEmpty()) {
       return;

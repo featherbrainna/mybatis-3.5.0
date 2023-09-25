@@ -18,6 +18,7 @@ package org.apache.ibatis.executor;
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.cursor.Cursor;
+import org.apache.ibatis.executor.loader.ResultLoader;
 import org.apache.ibatis.executor.statement.StatementUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
@@ -291,10 +292,10 @@ public abstract class BaseExecutor implements Executor {
   /**
    * 延迟加载。创建 DeferredLoad 对象并将其添加到 deferredLoads 集合中
    * @param ms MappedStatement对象
-   * @param resultObject
-   * @param property
+   * @param resultObject 外层结果对象的MetaObject
+   * @param property 外层结果对象的属性名
    * @param key CacheKey对象
-   * @param targetType
+   * @param targetType 目标类型
    */
   @Override
   public void deferLoad(MappedStatement ms, MetaObject resultObject, String property, CacheKey key, Class<?> targetType) {
@@ -567,7 +568,8 @@ public abstract class BaseExecutor implements Executor {
   }
 
   /**
-   * 延迟加载对象。它负责从 localCache 缓存中延迟加载结果对象
+   * 内部静态类
+   * 延迟加载对象。它负责从 localCache 一级缓存中延迟加载结果对象
    */
   private static class DeferredLoad {
 
@@ -576,7 +578,7 @@ public abstract class BaseExecutor implements Executor {
      */
     private final MetaObject resultObject;
     /**
-     * 延迟加载的属性名称
+     * 外层对象的延迟加载的属性名称
      */
     private final String property;
     /**
@@ -591,6 +593,9 @@ public abstract class BaseExecutor implements Executor {
      * 一级缓存，与 BaseExecutor.localCache 字段指向同一 PerpetualCache 对象
      */
     private final PerpetualCache localCache;
+    /**
+     * 对象工厂
+     */
     private final ObjectFactory objectFactory;
     /**
      * 负责结果对象的类型转换
@@ -608,13 +613,15 @@ public abstract class BaseExecutor implements Executor {
       this.property = property;
       this.key = key;
       this.localCache = localCache;
+      //初始化工厂对象
       this.objectFactory = configuration.getObjectFactory();
+      //初始化resultExtractor
       this.resultExtractor = new ResultExtractor(configuration, objectFactory);
       this.targetType = targetType;
     }
 
     /**
-     * 判断缓存项是否加载完全到缓存中
+     * 判断 一级缓存项 是否加载完全到缓存中
      * @return
      */
     public boolean canLoad() {
@@ -625,6 +632,7 @@ public abstract class BaseExecutor implements Executor {
 
     /**
      * 执行延迟加载
+     * 与 {@link ResultLoader#loadResult()} 类似
      */
     public void load() {
       @SuppressWarnings( "unchecked" )

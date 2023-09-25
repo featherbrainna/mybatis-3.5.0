@@ -26,8 +26,10 @@ import java.io.Reader;
 import java.util.Properties;
 
 /**
- * SqlSessionFactory 的具体构造器
- * MyBatis 的初始化流程的入口类
+ * SqlSessionFactory 的具体构造器，MyBatis 的初始化流程的入口类
+ *
+ * 提供了各种 build 的重载方法，核心的套路都是解析出 Configuration 配置对象，
+ * 从而创建出 DefaultSqlSessionFactory 对象。
  * Builds {@link SqlSession} instances.
  *
  * @author Clinton Begin
@@ -58,7 +60,7 @@ public class SqlSessionFactoryBuilder {
       //1.创建 XMLConfigBuilder 对象，读取mybatis-config.xml配置文件
       XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
       //2.执行 XML 解析，解析得到 Configuration 对象
-      //3.创建 DefaultSqlSessionFactory 对象
+      //3.调用 build(configuration) 创建 DefaultSqlSessionFactory 对象
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
@@ -91,7 +93,7 @@ public class SqlSessionFactoryBuilder {
       //1.创建 XMLConfigBuilder 对象，读取mybatis-config.xml配置文件
       XMLConfigBuilder parser = new XMLConfigBuilder(inputStream, environment, properties);
       //2.执行 XML 解析，解析得到 Configuration 对象
-      //3.创建 DefaultSqlSessionFactory 对象
+      //3.调用 build(Configuration) 创建 DefaultSqlSessionFactory 对象
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
@@ -106,6 +108,7 @@ public class SqlSessionFactoryBuilder {
   }
 
   /**
+   * 创建 DefaultSqlSessionFactory 返回
    * 所有 build 方法底层最终调用方法
    * @param config Configuration全局mybatis配置对象
    * @return SqlSessionFactory对象

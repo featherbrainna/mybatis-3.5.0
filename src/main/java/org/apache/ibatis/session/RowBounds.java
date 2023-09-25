@@ -16,22 +16,46 @@
 package org.apache.ibatis.session;
 
 /**
+ * 行限制对象
  * @author Clinton Begin
  */
 public class RowBounds {
 
+  /**
+   * 没有行限制时，默认的offset值
+   */
   public static final int NO_ROW_OFFSET = 0;
+  /**
+   * 没有行限制时，默认的limit值
+   */
   public static final int NO_ROW_LIMIT = Integer.MAX_VALUE;
+  /**
+   * 无行限制的行限对象。单例
+   */
   public static final RowBounds DEFAULT = new RowBounds();
 
+  /**
+   * 行限制的开始
+   */
   private final int offset;
+  /**
+   * 行限制的结果行数
+   */
   private final int limit;
 
+  /**
+   * 构造器，创建无行限制的行限制对象
+   */
   public RowBounds() {
     this.offset = NO_ROW_OFFSET;
     this.limit = NO_ROW_LIMIT;
   }
 
+  /**
+   * 构造器，初始化行限制数值
+   * @param offset
+   * @param limit
+   */
   public RowBounds(int offset, int limit) {
     this.offset = offset;
     this.limit = limit;

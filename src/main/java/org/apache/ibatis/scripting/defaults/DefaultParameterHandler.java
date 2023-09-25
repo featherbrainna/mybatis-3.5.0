@@ -33,7 +33,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * 实现 ParameterHandler 接口，默认 ParameterHandler 实现类
+ * 实现 ParameterHandler 接口，默认唯一的 ParameterHandler 实现类
  * 由 {@link org.apache.ibatis.scripting.xmltags.XMLLanguageDriver#createParameterHandler(MappedStatement, Object, BoundSql)} 调用
  * @author Clinton Begin
  * @author Eduardo Macarron

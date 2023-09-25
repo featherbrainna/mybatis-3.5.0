@@ -16,16 +16,32 @@
 package org.apache.ibatis.session;
 
 /**
+ * 结果上下文接口
  * @author Clinton Begin
  */
 public interface ResultContext<T> {
 
+  /**
+   * 获取当前结果对象
+   * @return
+   */
   T getResultObject();
 
+  /**
+   * 获取总的结果对象的数量。与记录行数相对应
+   * @return
+   */
   int getResultCount();
 
+  /**
+   * 是否暂停。可以控制结果集映射生成结果对象的过程暂停
+   * @return
+   */
   boolean isStopped();
 
+  /**
+   * 暂停
+   */
   void stop();
 
 }

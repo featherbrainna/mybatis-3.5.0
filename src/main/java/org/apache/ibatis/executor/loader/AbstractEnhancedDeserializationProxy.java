@@ -15,16 +15,16 @@
  */
 package org.apache.ibatis.executor.loader;
 
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import org.apache.ibatis.executor.ExecutorException;
-
 import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.property.PropertyCopier;
 import org.apache.ibatis.reflection.property.PropertyNamer;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author Clinton Begin
@@ -52,6 +52,14 @@ public abstract class AbstractEnhancedDeserializationProxy {
     this.reloadingProperty = false;
   }
 
+  /**
+   * 加载延迟加载属性，并返回代理对象
+   * @param enhanced 代理对象
+   * @param method 方法反射对象
+   * @param args 方法参数
+   * @return
+   * @throws Throwable
+   */
   public final Object invoke(Object enhanced, Method method, Object[] args) throws Throwable {
     final String methodName = method.getName();
     try {
