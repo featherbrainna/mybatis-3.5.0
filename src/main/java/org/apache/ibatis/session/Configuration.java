@@ -140,6 +140,9 @@ public class Configuration {
    * MapperRegistry 对象，注册 Mapper 接口
    */
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+  /**
+   * 拦截器链
+   */
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
@@ -667,7 +670,7 @@ public class Configuration {
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }
-    //4.应用插件
+    //4.应用插件。通过调用此方法创建 executor 的代理对象
     executor = (Executor) interceptorChain.pluginAll(executor);
     //5.返回执行器
     return executor;

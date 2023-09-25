@@ -21,15 +21,25 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 方法签名注解。用于标识拦截的方法
  * @author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface Signature {
+  /**
+   * @return 接口类型
+   */
   Class<?> type();
 
+  /**
+   * @return 方法名
+   */
   String method();
 
+  /**
+   * @return 参数类型数组
+   */
   Class<?>[] args();
 }

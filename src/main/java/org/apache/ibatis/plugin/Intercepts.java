@@ -22,12 +22,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 插件注解。用于注册拦截的方法签名
  * @author Clinton Begin
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Intercepts {
+  /**
+   * @return 拦截的方法签名数组
+   */
   Signature[] value();
 }
 

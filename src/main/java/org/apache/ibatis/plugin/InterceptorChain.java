@@ -20,19 +20,34 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * 拦截器 Interceptor 链
  * @author Clinton Begin
  */
 public class InterceptorChain {
 
+  /**
+   * 从mybatis-config.xml加载的所有 插件对象/拦截器
+   */
   private final List<Interceptor> interceptors = new ArrayList<>();
 
+  /**
+   * 应用所有插件。应用所有拦截器到指定目标对象
+   * @param target 目标对象
+   * @return 应用后的代理对象
+   */
   public Object pluginAll(Object target) {
+    //1.遍历 interceptors 集合
     for (Interceptor interceptor : interceptors) {
+      //2.调用 Interceptor.plugin(target) 方法
       target = interceptor.plugin(target);
     }
     return target;
   }
 
+  /**
+   * 添加插件到 interceptors
+   * @param interceptor
+   */
   public void addInterceptor(Interceptor interceptor) {
     interceptors.add(interceptor);
   }

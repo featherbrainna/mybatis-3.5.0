@@ -19,14 +19,28 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
+ * 调用信息对象，方法调用信息。封装了插件调用信息
+ * 作为 {@link Interceptor#intercept(Invocation)} 的方法参数
  * @author Clinton Begin
  */
 public class Invocation {
 
+  /**
+   * 调用的目标对象
+   */
   private final Object target;
+  /**
+   * 调用的目标方法
+   */
   private final Method method;
+  /**
+   * 调用的方法参数数组
+   */
   private final Object[] args;
 
+  /**
+   * 构造器。初始化所有属性
+   */
   public Invocation(Object target, Method method, Object[] args) {
     this.target = target;
     this.method = method;
@@ -45,6 +59,12 @@ public class Invocation {
     return args;
   }
 
+  /**
+   * 反射方式执行调用方法
+   * @return 调用结果
+   * @throws InvocationTargetException
+   * @throws IllegalAccessException
+   */
   public Object proceed() throws InvocationTargetException, IllegalAccessException {
     return method.invoke(target, args);
   }

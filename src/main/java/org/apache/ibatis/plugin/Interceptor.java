@@ -18,14 +18,31 @@ package org.apache.ibatis.plugin;
 import java.util.Properties;
 
 /**
+ * 拦截器接口
  * @author Clinton Begin
  */
 public interface Interceptor {
 
+  /**
+   * 执行拦截逻辑的方法
+   * @param invocation 调用信息
+   * @return 调用结果
+   * @throws Throwable
+   */
   Object intercept(Invocation invocation) throws Throwable;
 
+  /**
+   * 应用插件
+   * 如应用成功，则会创建目标对象的代理对象。决定了是否触发intercept(Invocation)方法
+   * @param target 目标对象
+   * @return 应用的结果对象，可以是代理对象，也可以是 target 对象，也可以是任意对象
+   */
   Object plugin(Object target);
 
+  /**
+   * 设置拦截器属性
+   * @param properties 属性
+   */
   void setProperties(Properties properties);
 
 }
